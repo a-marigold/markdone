@@ -1,12 +1,24 @@
 {
-    "name": "markdown",
-    "module": "index.ts",
+    "name": "markdone",
+    "version": "0.0.0",
+    "module": "./dist/index.ts",
     "type": "module",
     "private": false,
     "author": {
         "name": "marigold",
         "url": "https://github.com/a-marigold"
     },
+    "license": "UNLICENSED",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/a-marigold/markdone"
+    },
+    "files": [
+        "dist"
+    ],
+    "readme": "./README.md",
     "devDependencies": {
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^12.3.0",
@@ -17,5 +29,8 @@
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "scripts": {
+        "build": "rollup -c"
     }
 }
