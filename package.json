@@ -1,15 +1,21 @@
 {
-  "name": "markdown",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4",
-    "@types/bun": "latest",
-    "rollup": "^4.55.1",
-    "rollup-plugin-dts": "^6.3.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+    "name": "markdown",
+    "module": "index.ts",
+    "type": "module",
+    "private": false,
+    "author": {
+        "name": "marigold",
+        "url": "https://github.com/a-marigold"
+    },
+    "devDependencies": {
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^12.3.0",
+        "@types/bun": "latest",
+        "rollup": "^4.55.1",
+        "rollup-plugin-dts": "^6.3.0",
+        "tslib": "^2.8.1"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
 }
