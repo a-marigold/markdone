@@ -10,9 +10,11 @@ export type Token = {
 
 export type TokenType =
     | 'Heading'
-    | 'Paragraph'
     | 'Bold'
     | 'Italic'
     | 'BoldItalic'
+    | 'OrderedListItem'
+    | 'CodeBlock'
+    | 'FencedCodeBlock'
     | 'LineBreak'
     | 'WhiteSpace';

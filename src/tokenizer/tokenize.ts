@@ -1,4 +1,5 @@
 import type { Token } from './types';
+import { NUMBER_REGEXP } from './constants';
 
 export const tokenize = (source: string): Token[] => {
     const tokens: Token[] = [];
@@ -87,7 +88,82 @@ export const tokenize = (source: string): Token[] => {
             }
         }
 
+        if (NUMBER_REGEXP.test(char) && source[pos + 1] === '.') {
+            pos += 2;
+
+            const startPos = pos;
+
+            while (pos < sourceLength && source[pos] !== '\n') {
+                pos++;
+            }
+
+            pos++;
+
+            tokens[tokens.length] = {
+                type: 'OrderedListItem',
+                value: source.slice(startPos, pos),
+            };
+
+            continue main;
+        }
+
+        if (char === '`') {
+            pos++;
+
+            if (source[pos] === '`' && source[pos + 1] === '`') {
+                pos += 2;
+
+                while (
+                    pos < sourceLength &&
+                    source[pos] !== ' ' &&
+                    source[pos] !== '\n'
+                ) {
+                    pos++;
+                }
+                pos++;
+
+                const fencedStartPos = pos;
+
+                while (
+                    pos < sourceLength &&
+                    !(
+                        source[pos] === '`' &&
+                        source[pos + 1] === '`' &&
+                        source[pos + 2] === '`'
+                    )
+                ) {
+                    pos++;
+                }
+
+                tokens[tokens.length] = {
+                    type: 'FencedCodeBlock',
+
+                    value: source.slice(fencedStartPos, pos),
+                };
+
+                pos += 3;
+
+                continue main;
+            } else {
+                const codeStartPos = pos;
+
+                while (pos < sourceLength && source[pos] !== '`') {
+                    pos++;
+                }
+
+                tokens[tokens.length] = {
+                    type: 'CodeBlock',
+                    value: source.slice(codeStartPos, pos),
+                };
+
+                pos++;
+
+                continue;
+            }
+        }
+
         // fallback
+
         pos++;
     }
 };
