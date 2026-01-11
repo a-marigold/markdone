@@ -166,4 +166,6 @@ export const tokenize = (source: string): Token[] => {
 
         pos++;
     }
+
+    return tokens;
 };
