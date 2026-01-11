@@ -6,15 +6,13 @@ export type Token = {
     type: TokenType;
 
     value: string;
-
-    start: number;
-
-    end: number;
 };
 
 export type TokenType =
     | 'Heading'
     | 'Paragraph'
-    | 'LineBreak'
     | 'Bold'
-    | 'Italic';
+    | 'Italic'
+    | 'BoldItalic'
+    | 'LineBreak'
+    | 'WhiteSpace';
