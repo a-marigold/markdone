@@ -20,6 +20,7 @@
     ],
     "readme": "./README.md",
     "devDependencies": {
+        "@biomejs/biome": "^2.3.11",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^12.3.0",
         "@types/bun": "latest",
@@ -30,7 +31,12 @@
     "peerDependencies": {
         "typescript": "^5"
     },
+    "keywords": [
+        "markdown",
+        "markdone"
+    ],
     "scripts": {
-        "build": "rollup -c"
+        "build": "rollup -c",
+        "lint": "bunx biome check"
     }
 }
