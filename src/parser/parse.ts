@@ -152,6 +152,37 @@ const parseInline = (source: string): ASTInlineNode[] => {
             continue;
         }
 
+        if (char === '`') {
+            pos++;
+
+            const codeStart = pos;
+
+            while (pos < sourceLength && source[pos] !== '`') {
+                pos++;
+            }
+
+            if (pos === sourceLength) {
+                pos = codeStart;
+                currentText += '`';
+            } else {
+                inlineNode[inlineNode.length] = {
+                    type: 'Text',
+                    value: currentText,
+                };
+
+                currentText = '';
+
+                inlineNode[inlineNode.length] = {
+                    type: 'InlineCode',
+                    value: source.slice(codeStart, pos),
+                };
+
+                pos++;
+            }
+
+            continue;
+        }
+
         currentText += source[pos];
 
         pos++;
