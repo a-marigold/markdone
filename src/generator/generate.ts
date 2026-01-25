@@ -1,4 +1,4 @@
-import type { Token } from '../tokenizer';
+import type { Token } from '../parser';
 
 import type { MarkdownCSSClasses } from './types';
 import {
@@ -21,7 +21,7 @@ import {
 export const generate = (
     tokens: Token[],
 
-    cssClasses: MarkdownCSSClasses
+    cssClasses: MarkdownCSSClasses,
 ): string => {
     let generated = '';
 

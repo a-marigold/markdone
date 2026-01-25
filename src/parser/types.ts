@@ -2,8 +2,8 @@ export type AST = {
     program: Program;
 };
 
-export type ASTInlineNode = {
-    type: ASTInlineNodeType;
+export type ASTInlineNode<T extends ASTInlineNodeType = ASTInlineNodeType> = {
+    type: T;
     value: string;
 };
 

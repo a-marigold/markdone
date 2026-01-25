@@ -24,9 +24,9 @@
         // Some stricter flags (disabled by default)
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "noPropertyAccessFromIndexSignature": true
+        "noPropertyAccessFromIndexSignature": false
     },
-    "include": ["./src"],
+    "include": ["./src", "src/parser/parse.ts"],
 
     "exclude": ["node_modules", "dist"]
 }
