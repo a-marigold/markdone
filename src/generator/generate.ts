@@ -3,25 +3,59 @@ import type { AST, ASTInlineNode } from '../parser';
 import type { MarkdownCSSClasses } from './types';
 import { htmlTags } from './constants';
 
+// TODO: remove the htmlTags constant
 /**
  *
- * @param tokens
- * @param cssClasses
+ *
+ * @param {AST} AST
+ * @param {MarkdownCSSClasses} cssClasses
  *
  * @returns
  */
 export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
     let generated = '';
     /**
-     * The body of AST.program
+     *
+     * The body of `AST.program`
      */
     const body = AST.program.body;
 
     const bodyLength = body.length;
 
     let pos = 0;
+
     while (pos < bodyLength) {
-        pos++;
+        const currentNode = body[pos];
+
+        if (currentNode.type === 'Paragraph') {
+            generated +=
+                '<p class="' +
+                cssClasses.paragraph +
+                '">' +
+                generateInline(currentNode.children, cssClasses) +
+                '</p>';
+
+            pos++;
+
+            continue;
+        }
+
+        if (currentNode.type === 'Heading') {
+            generated +=
+                '<h' +
+                currentNode.level +
+                ' class="' +
+                cssClasses.heading +
+                '>' +
+                generateInline(currentNode.children, cssClasses) +
+                '<h' +
+                currentNode.level +
+                '>';
+
+            pos++;
+
+            continue;
+        }
     }
 
     return generated;
