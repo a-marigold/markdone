@@ -1,15 +1,7 @@
-import type { Token } from '../parser';
+import type { AST, ASTInlineNode } from '../parser';
 
 import type { MarkdownCSSClasses } from './types';
-import {
-    OPENED_SPAN,
-    CLOSED_SPAN,
-    OPENED_CODE,
-    CLOSED_CODE,
-    OPENED_PRE,
-    CLOSED_PRE,
-    defaultCssClasses,
-} from './constants';
+import { htmlTags } from './constants';
 
 /**
  *
@@ -18,92 +10,100 @@ import {
  *
  * @returns
  */
-export const generate = (
-    tokens: Token[],
+export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
+    let generated = '';
+    /**
+     * The body of AST.program
+     */
+    const body = AST.program.body;
+
+    const bodyLength = body.length;
+
+    let pos = 0;
+    while (pos < bodyLength) {
+        pos++;
+    }
+
+    return generated;
+};
+
+const generateInline = (
+    inlineNodes: ASTInlineNode[],
 
     cssClasses: MarkdownCSSClasses,
 ): string => {
     let generated = '';
 
-    const tokensLength = tokens.length;
+    const nodesLength = inlineNodes.length;
 
-    let tokenPos = 0;
+    let pos = 0;
+    while (pos < nodesLength) {
+        const currentNode = inlineNodes[pos];
 
-    while (tokenPos < tokensLength) {
-        const currentToken = tokens[tokenPos];
+        if (currentNode.type === 'Text') {
+            generated += currentNode.value;
 
-        if (currentToken.type === 'WhiteSpace') {
-            generated +=
-                OPENED_SPAN +
-                defaultCssClasses.whitespace +
-                ' ' +
-                cssClasses.whitespace +
-                '">' +
-                currentToken.value +
-                CLOSED_SPAN;
-
-            tokenPos++;
+            pos++;
 
             continue;
         }
 
-        if (currentToken.type === 'Heading') {
-            let headingNumber = 0;
-
-            while (
-                headingNumber < currentToken.value.length &&
-                currentToken.value[headingNumber] === '#'
-            ) {
-                headingNumber++;
-            }
-
+        if (currentNode.type === 'Bold') {
             generated +=
-                '<h' +
-                headingNumber +
-                ' ' +
-                'class="' +
-                cssClasses.heading +
+                htmlTags.openedStrong +
+                cssClasses.bold +
                 '">' +
-                currentToken.value.slice(headingNumber + 1) +
-                '</h' +
-                headingNumber +
-                '>';
+                currentNode.value +
+                htmlTags.closedStrong;
 
-            tokenPos++;
+            pos++;
+            continue;
+        }
+
+        if (currentNode.type === 'Italic') {
+            generated +=
+                htmlTags.openedEm +
+                cssClasses.italic +
+                '">' +
+                currentNode.value +
+                htmlTags.closedEm;
+
+            pos++;
 
             continue;
         }
 
-        if (currentToken.type === 'CodeBlock') {
+        if (currentNode.type === 'BoldItalic') {
             generated +=
-                OPENED_CODE +
-                cssClasses.codeBlock +
+                htmlTags.openedEm +
+                cssClasses.italic +
                 '">' +
-                currentToken.value +
-                CLOSED_CODE;
+                htmlTags.openedStrong +
+                cssClasses.bold +
+                '">' +
+                currentNode.value +
+                htmlTags.closedStrong +
+                htmlTags.closedEm;
 
-            tokenPos++;
+            pos++;
 
             continue;
         }
 
-        if (currentToken.type === 'FencedCodeBlock') {
+        if (currentNode.type === 'InlineCode') {
             generated +=
-                OPENED_PRE +
-                cssClasses.fencedCodeBlock +
+                htmlTags.openedCode +
+                cssClasses.code +
                 '">' +
-                '<code>' +
-                currentToken.value +
-                CLOSED_CODE;
+                currentNode.value +
+                htmlTags.closedCode;
 
-            tokenPos++;
+            pos++;
 
             continue;
         }
 
-        // fallback
-
-        tokenPos++;
+        pos++;
     }
 
     return generated;
