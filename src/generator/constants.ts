@@ -2,19 +2,33 @@
 
 import type { MarkdownCSSClasses } from './types';
 
-export const OPENED_SPAN = '<span class="';
-export const CLOSED_SPAN = '</span>';
-
-export const OPENED_CODE = '<code class="';
-export const CLOSED_CODE = '</code>';
-
-export const OPENED_PRE = '<pre class="';
-export const CLOSED_PRE = '</pre>';
-
 /**
+ * #### Strings with opened HTML tags with opened `class` attribute and their closed versions.
  *
- * CSS classes with default styles
- */
-export const defaultCssClasses: MarkdownCSSClasses = {
-    whitespace: '',
+ * @example
+ * ```typescript
+ * htmlTags.openedSpan; // '<span class="'
+ * htmlTags.closedSpan; // '</span>'
+ * ```
+ *
+ *
+ *
+ *
+ *  */
+export const htmlTags = {
+    openedSpan: '<span class="',
+    closedSpan: '</span>',
+
+    openedCode: '<code class="',
+
+    closedCode: '</code>',
+
+    openedPre: '<pre class="',
+    closedPre: '</pre>',
+
+    openedEm: '<em class="',
+    closedEm: '</em',
+
+    openedStrong: '<strong class="',
+    closedStrong: '</strong>',
 };
