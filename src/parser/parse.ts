@@ -1,6 +1,22 @@
 import type { AST, ASTInlineNode, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
+/**
+ *
+ * #### Parses provided `source` to AST.
+ * #### Also parses all the nested Inline markdown (Emphasis, Text).
+ * #### The AST can be used straight for generating HTML and the like.
+ *
+ * @param {string} source Source markdown string to be parsed.
+ * @returns {AST} AST with markdown nodes from `source`.
+ *
+ *
+ * @example
+ *
+ * ```typescript
+ * const AST = parse('# heading **bold**');
+ * ```
+ */
 export const parse = (source: string): AST => {
     const AST: AST = { program: { type: 'Program', body: [] } };
 
@@ -19,7 +35,7 @@ export const parse = (source: string): AST => {
 
             pos++;
 
-            let level = 0;
+            let level = 1;
 
             while (pos < sourceLength && source[pos] !== ' ') {
                 level++;
@@ -75,8 +91,6 @@ export const parse = (source: string): AST => {
                 };
             }
 
-            pos++;
-
             continue;
         }
 
@@ -86,6 +100,13 @@ export const parse = (source: string): AST => {
     return AST;
 };
 
+/**
+ * #### Parses Inline markdown (Emphasis, Text Fragments).
+ *
+ * @param {string} source Source string of line to be parsed.
+ * @returns {ASTInlineNode[]} Array with `ASTInlineNode`\`s.
+ *
+ */
 const parseInline = (source: string): ASTInlineNode[] => {
     const inlineNode: ASTInlineNode[] = [];
 
@@ -115,7 +136,6 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 ) {
                     pos++;
                 }
-
                 if (pos === sourceLength) {
                     pos = boldItalicStart;
                     currentText += '***';
@@ -221,6 +241,10 @@ const parseInline = (source: string): ASTInlineNode[] => {
         pos++;
 
         continue;
+    }
+
+    if (currentText) {
+        inlineNode[inlineNode.length] = { type: 'Text', value: currentText };
     }
 
     return inlineNode;

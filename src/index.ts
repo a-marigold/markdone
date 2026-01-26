@@ -1,1 +1,1 @@
-export { getHtmlFromMd } from './getHtmlFromMd';
+export { generateHtml } from './generateHtml';
