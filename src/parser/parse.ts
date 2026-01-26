@@ -15,30 +15,63 @@ export const parse = (source: string): AST => {
         }
 
         if (source[pos] === '#') {
-            let start = pos;
+            const start = pos;
 
             pos++;
 
-            let level = 1;
+            let level = 0;
 
-            while (pos < sourceLength && source[pos] === '#') {
+            while (pos < sourceLength && source[pos] !== ' ') {
                 level++;
 
                 pos++;
             }
+            pos++;
 
             if (level > MAX_HEADING_LEVEL) {
+                while (
+                    pos < sourceLength &&
+                    source[pos] !== '\n' &&
+                    source[pos] !== '\r'
+                ) {
+                    pos++;
+                }
+
+                const paragraphEnd = pos;
+
+                if (source[pos] === '\r') {
+                    pos++;
+                }
+                pos++;
+
                 programBody[programBody.length] = {
                     type: 'Paragraph',
-                    children: [],
+
+                    children: parseInline(source.slice(start, paragraphEnd)),
                 };
             } else {
-                start = pos;
+                const headingStart = pos;
+
+                while (
+                    pos < sourceLength &&
+                    source[pos] !== '\n' &&
+                    source[pos] !== '\r'
+                ) {
+                    pos++;
+                }
+                const headingEnd = pos;
+
+                if (source[pos] === '\r') {
+                    pos++;
+                }
+                pos++;
 
                 programBody[programBody.length] = {
                     type: 'Heading',
                     level: level as HeadingLevel,
-                    children: [],
+                    children: parseInline(
+                        source.slice(headingStart, headingEnd),
+                    ),
                 };
             }
 
