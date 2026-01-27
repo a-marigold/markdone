@@ -45,7 +45,7 @@ export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
                 currentNode.level +
                 ' class="' +
                 cssClasses.heading +
-                '>' +
+                '">' +
                 generateInline(currentNode.children, cssClasses) +
                 '<h' +
                 currentNode.level +
@@ -86,7 +86,7 @@ const generateInline = (
                 '<strong class="' +
                 cssClasses.bold +
                 '">' +
-                currentNode.value +
+                generateInline(currentNode.children, cssClasses) +
                 '</strong>';
 
             pos++;
@@ -98,7 +98,7 @@ const generateInline = (
                 '<em class="' +
                 cssClasses.italic +
                 '">' +
-                currentNode.value +
+                generateInline(currentNode.children, cssClasses) +
                 '</em>';
 
             pos++;
@@ -114,7 +114,7 @@ const generateInline = (
                 '<strong class="' +
                 cssClasses.bold +
                 '">' +
-                currentNode.value +
+                generateInline(currentNode.children, cssClasses) +
                 '</strong></em>';
 
             pos++;
