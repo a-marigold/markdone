@@ -37,14 +37,17 @@ export const parse = (source: string): AST => {
 
             let level = 1;
 
-            while (pos < sourceLength && source[pos] !== ' ') {
+            while (
+                pos < sourceLength &&
+                source[pos] === '#' &&
+                source[pos] !== ' '
+            ) {
                 level++;
 
                 pos++;
             }
-            pos++;
 
-            if (level > MAX_HEADING_LEVEL) {
+            if (level > MAX_HEADING_LEVEL && source[pos] === ' ') {
                 while (
                     pos < sourceLength &&
                     source[pos] !== '\n' &&
@@ -96,12 +99,12 @@ export const parse = (source: string): AST => {
 
         pos++;
     }
-
+    Bun.stdout.write(JSON.stringify(AST, null, 2) + '\n');
     return AST;
 };
 
 /**
- * #### Parses Inline markdown (Emphasis, Text Fragments).
+ * #### Parses Inline markdown (Emphasis, Text).
  *
  * @param {string} source Source string of line to be parsed.
  * @returns {ASTInlineNode[]} Array with `ASTInlineNode`\`s.
@@ -122,7 +125,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
             pos++;
 
             if (source[pos] === '*' && source[pos + 1] === '*') {
-                pos++;
+                pos += 2;
 
                 const boldItalicStart = pos;
 
@@ -138,11 +141,22 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 }
                 if (pos === sourceLength) {
                     pos = boldItalicStart;
+
                     currentText += '***';
                 } else {
                     inlineNode[inlineNode.length] = {
+                        type: 'Text',
+
+                        value: currentText,
+                    };
+
+                    currentText = '';
+
+                    inlineNode[inlineNode.length] = {
                         type: 'BoldItalic',
-                        value: source.slice(boldItalicStart, pos),
+                        children: parseInline(
+                            source.slice(boldItalicStart, pos),
+                        ),
                     };
 
                     pos += 3;
@@ -168,12 +182,11 @@ const parseInline = (source: string): ASTInlineNode[] => {
                         type: 'Text',
                         value: currentText,
                     };
-
                     currentText = '';
 
                     inlineNode[inlineNode.length] = {
                         type: 'Bold',
-                        value: source.slice(boldStart, pos),
+                        children: parseInline(source.slice(boldStart, pos)),
                     };
 
                     pos += 2;
@@ -191,13 +204,18 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 } else {
                     inlineNode[inlineNode.length] = {
                         type: 'Text',
+
                         value: currentText,
                     };
+
                     currentText = '';
+
                     inlineNode[inlineNode.length] = {
                         type: 'Italic',
-                        value: source.slice(italicStart, pos),
+
+                        children: parseInline(source.slice(italicStart, pos)),
                     };
+
                     pos++;
                 }
             }
