@@ -47,7 +47,7 @@ export const parse = (source: string): AST => {
                 pos++;
             }
 
-            if (level > MAX_HEADING_LEVEL && source[pos] === ' ') {
+            if (level > MAX_HEADING_LEVEL || source[pos] !== ' ') {
                 while (
                     pos < sourceLength &&
                     source[pos] !== '\n' &&
@@ -99,7 +99,7 @@ export const parse = (source: string): AST => {
 
         pos++;
     }
-    Bun.stdout.write(JSON.stringify(AST, null, 2) + '\n');
+
     return AST;
 };
 
@@ -115,13 +115,16 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
     const sourceLength = source.length;
 
-    let currentText = '';
+    let lastTextStart = 0;
 
     let pos = 0;
+
     while (pos < sourceLength) {
         const char = source[pos];
 
         if (char === '*') {
+            const start = pos;
+
             pos++;
 
             if (source[pos] === '*' && source[pos + 1] === '*') {
@@ -139,27 +142,27 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 ) {
                     pos++;
                 }
+
                 if (pos === sourceLength) {
                     pos = boldItalicStart;
-
-                    currentText += '***';
                 } else {
                     inlineNode[inlineNode.length] = {
                         type: 'Text',
 
-                        value: currentText,
+                        value: source.slice(lastTextStart, start),
                     };
-
-                    currentText = '';
 
                     inlineNode[inlineNode.length] = {
                         type: 'BoldItalic',
+
                         children: parseInline(
                             source.slice(boldItalicStart, pos),
                         ),
                     };
 
                     pos += 3;
+
+                    lastTextStart = pos;
                 }
             } else if (source[pos] === '*') {
                 pos++;
@@ -175,14 +178,11 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
                 if (pos === sourceLength) {
                     pos = boldStart;
-
-                    currentText += '**';
                 } else {
                     inlineNode[inlineNode.length] = {
                         type: 'Text',
-                        value: currentText,
+                        value: source.slice(lastTextStart, start),
                     };
-                    currentText = '';
 
                     inlineNode[inlineNode.length] = {
                         type: 'Bold',
@@ -190,6 +190,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
                     };
 
                     pos += 2;
+                    lastTextStart = pos;
                 }
             } else {
                 const italicStart = pos;
@@ -200,15 +201,14 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
                 if (pos === sourceLength) {
                     pos = italicStart;
-                    currentText += '*';
+
+                    lastTextStart = pos;
                 } else {
                     inlineNode[inlineNode.length] = {
                         type: 'Text',
 
-                        value: currentText,
+                        value: source.slice(lastTextStart, start),
                     };
-
-                    currentText = '';
 
                     inlineNode[inlineNode.length] = {
                         type: 'Italic',
@@ -217,6 +217,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
                     };
 
                     pos++;
+                    lastTextStart = pos;
                 }
             }
 
@@ -224,6 +225,8 @@ const parseInline = (source: string): ASTInlineNode[] => {
         }
 
         if (char === '`') {
+            const start = pos;
+
             pos++;
 
             const codeStart = pos;
@@ -234,14 +237,11 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
             if (pos === sourceLength) {
                 pos = codeStart;
-                currentText += '`';
             } else {
                 inlineNode[inlineNode.length] = {
                     type: 'Text',
-                    value: currentText,
+                    value: source.slice(lastTextStart, start),
                 };
-
-                currentText = '';
 
                 inlineNode[inlineNode.length] = {
                     type: 'InlineCode',
@@ -249,21 +249,20 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 };
 
                 pos++;
+
+                lastTextStart = pos;
             }
 
             continue;
         }
-
-        currentText += source[pos];
-
+        // fallback
         pos++;
-
-        continue;
     }
 
-    if (currentText) {
-        inlineNode[inlineNode.length] = { type: 'Text', value: currentText };
-    }
+    inlineNode[inlineNode.length] = {
+        type: 'Text',
+        value: source.slice(lastTextStart),
+    };
 
     return inlineNode;
 };
