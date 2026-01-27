@@ -13,10 +13,13 @@
 export type MarkdownCSSClasses = Partial<{
     heading: string;
 
-    whitespace: string;
+    paragraph: string;
 
-    codeBlock: string;
+    code: string;
     fencedCodeBlock: string;
 
     orderedList: string;
+
+    bold: string;
+    italic: string;
 }>;

@@ -1,7 +1,6 @@
 import type { AST, ASTInlineNode } from '../parser';
 
 import type { MarkdownCSSClasses } from './types';
-import { htmlTags } from './constants';
 
 // TODO: remove the htmlTags constant
 /**
@@ -84,11 +83,11 @@ const generateInline = (
 
         if (currentNode.type === 'Bold') {
             generated +=
-                htmlTags.openedStrong +
+                '<strong class="' +
                 cssClasses.bold +
                 '">' +
                 currentNode.value +
-                htmlTags.closedStrong;
+                '</strong>';
 
             pos++;
             continue;
@@ -96,11 +95,11 @@ const generateInline = (
 
         if (currentNode.type === 'Italic') {
             generated +=
-                htmlTags.openedEm +
+                '<em class="' +
                 cssClasses.italic +
                 '">' +
                 currentNode.value +
-                htmlTags.closedEm;
+                '</em>';
 
             pos++;
 
@@ -109,15 +108,14 @@ const generateInline = (
 
         if (currentNode.type === 'BoldItalic') {
             generated +=
-                htmlTags.openedEm +
+                '<em class="' +
                 cssClasses.italic +
                 '">' +
-                htmlTags.openedStrong +
+                '<strong class="' +
                 cssClasses.bold +
                 '">' +
                 currentNode.value +
-                htmlTags.closedStrong +
-                htmlTags.closedEm;
+                '</strong></em>';
 
             pos++;
 
@@ -126,11 +124,11 @@ const generateInline = (
 
         if (currentNode.type === 'InlineCode') {
             generated +=
-                htmlTags.openedCode +
+                '<code class=' +
                 cssClasses.code +
                 '">' +
                 currentNode.value +
-                htmlTags.closedCode;
+                '</code>';
 
             pos++;
 
