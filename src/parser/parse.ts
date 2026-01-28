@@ -10,6 +10,9 @@ import { checkHasContent } from './utils';
  * #### The AST can be used straight for generating HTML and the like.
  *
  * @param {string} source Source markdown string to be parsed.
+ *
+ *
+ *
  * @returns {AST} AST with markdown nodes from `source`.
  *
  *
@@ -18,6 +21,11 @@ import { checkHasContent } from './utils';
  * ```typescript
  * const AST = parse('# heading **bold**');
  * ```
+ *
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -39,7 +47,7 @@ export const parse = (source: string): AST => {
     while (pos < sourceLength) {
         const char = source[pos];
 
-        if (char === '\n' || char == '\r') {
+        if (char === '\n' || char === '\r') {
             if (char === '\r') {
                 pos++;
             }
@@ -65,9 +73,7 @@ export const parse = (source: string): AST => {
                     body[body.length] = {
                         type: 'Paragraph',
 
-                        children: parseInline(
-                            source.slice(lastParagraphStart, pos),
-                        ),
+                        children: parseInline(source, lastParagraphStart, pos),
                     };
                 }
 
@@ -120,7 +126,11 @@ export const parse = (source: string): AST => {
                         type: 'Paragraph',
 
                         children: parseInline(
-                            source.slice(lastParagraphStart, start),
+                            source,
+
+                            lastParagraphStart,
+
+                            start,
                         ),
                     };
                 }
@@ -130,9 +140,7 @@ export const parse = (source: string): AST => {
 
                     level: level as HeadingLevel,
 
-                    children: parseInline(
-                        source.slice(headingStart, headingEnd),
-                    ),
+                    children: parseInline(source, headingStart, headingEnd),
                 };
 
                 lastParagraphStart = pos;
@@ -148,7 +156,7 @@ export const parse = (source: string): AST => {
         body[body.length] = {
             type: 'Paragraph',
 
-            children: parseInline(source.slice(lastParagraphStart)),
+            children: parseInline(source, lastParagraphStart, sourceLength),
         };
     }
 
@@ -162,16 +170,18 @@ export const parse = (source: string): AST => {
  * @returns {ASTInlineNode[]} Array with `ASTInlineNode`\`s.
  *
  */
-const parseInline = (source: string): ASTInlineNode[] => {
+const parseInline = (
+    source: string,
+    start: number,
+    end: number,
+): ASTInlineNode[] => {
     const inlineNode: ASTInlineNode[] = [];
 
-    const sourceLength = source.length;
+    let lastTextStart = start;
 
-    let lastTextStart = 0;
+    let pos = start;
 
-    let pos = 0;
-
-    while (pos < sourceLength) {
+    while (pos < end) {
         const char = source[pos];
 
         if (char === '*') {
@@ -185,7 +195,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 const boldItalicStart = pos;
 
                 while (
-                    pos < sourceLength &&
+                    pos < end &&
                     !(
                         source[pos] === '*' &&
                         source[pos + 1] === '*' &&
@@ -196,7 +206,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
                     pos++;
                 }
 
-                if (pos === sourceLength) {
+                if (pos === end) {
                     pos = boldItalicStart;
                 } else {
                     inlineNode[inlineNode.length] = {
@@ -208,9 +218,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
                     inlineNode[inlineNode.length] = {
                         type: 'BoldItalic',
 
-                        children: parseInline(
-                            source.slice(boldItalicStart, pos),
-                        ),
+                        children: parseInline(source, boldItalicStart, pos),
                     };
 
                     pos += 3;
@@ -223,23 +231,24 @@ const parseInline = (source: string): ASTInlineNode[] => {
                 const boldStart = pos;
 
                 while (
-                    pos < sourceLength &&
+                    pos < end &&
                     !(source[pos] === '*' && source[pos + 1] === '*')
                 ) {
                     pos++;
                 }
 
-                if (pos === sourceLength) {
+                if (pos === end) {
                     pos = boldStart;
                 } else {
                     inlineNode[inlineNode.length] = {
                         type: 'Text',
+
                         value: source.slice(lastTextStart, start),
                     };
 
                     inlineNode[inlineNode.length] = {
                         type: 'Bold',
-                        children: parseInline(source.slice(boldStart, pos)),
+                        children: parseInline(source, boldStart, pos),
                     };
 
                     pos += 2;
@@ -248,11 +257,11 @@ const parseInline = (source: string): ASTInlineNode[] => {
             } else {
                 const italicStart = pos;
 
-                while (pos < sourceLength && source[pos] !== '*') {
+                while (pos < end && source[pos] !== '*') {
                     pos++;
                 }
 
-                if (pos === sourceLength) {
+                if (pos === end) {
                     pos = italicStart;
                 } else {
                     inlineNode[inlineNode.length] = {
@@ -264,7 +273,7 @@ const parseInline = (source: string): ASTInlineNode[] => {
                     inlineNode[inlineNode.length] = {
                         type: 'Italic',
 
-                        children: parseInline(source.slice(italicStart, pos)),
+                        children: parseInline(source, italicStart, pos),
                     };
 
                     pos++;
@@ -282,11 +291,11 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
             const codeStart = pos;
 
-            while (pos < sourceLength && source[pos] !== '`') {
+            while (pos < end && source[pos] !== '`') {
                 pos++;
             }
 
-            if (pos === sourceLength) {
+            if (pos === end) {
                 pos = codeStart;
             } else {
                 inlineNode[inlineNode.length] = {
@@ -311,11 +320,11 @@ const parseInline = (source: string): ASTInlineNode[] => {
         pos++;
     }
 
-    if (lastTextStart < sourceLength) {
+    if (lastTextStart < end) {
         inlineNode[inlineNode.length] = {
             type: 'Text',
 
-            value: source.slice(lastTextStart),
+            value: source.slice(lastTextStart, end),
         };
     }
 
