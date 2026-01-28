@@ -1,6 +1,8 @@
 import type { AST, ASTInlineNode, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
+import { checkHasContent } from './utils';
+
 /**
  *
  * #### Parses provided `source` to AST.
@@ -11,13 +13,14 @@ import { MAX_HEADING_LEVEL } from './constants';
  * @returns {AST} AST with markdown nodes from `source`.
  *
  *
- *
- *
  * @examples
  *
  * ```typescript
  * const AST = parse('# heading **bold**');
  * ```
+ *
+ *
+ *
  *
  *
  */
@@ -40,6 +43,7 @@ export const parse = (source: string): AST => {
             if (char === '\r') {
                 pos++;
             }
+            pos++;
 
             let newLineCount = 1;
 
@@ -57,24 +61,7 @@ export const parse = (source: string): AST => {
             }
 
             if (newLineCount > 1) {
-                let hasContent = false;
-
-                let checkIndex = lastParagraphStart;
-
-                while (checkIndex < pos) {
-                    const char = source[checkIndex];
-                    if (
-                        char !== ' ' &&
-                        char !== '\n' &&
-                        char !== '\r' &&
-                        char !== '\t'
-                    ) {
-                        hasContent = true;
-                    }
-                    checkIndex++;
-                }
-
-                if (hasContent) {
+                if (checkHasContent(source, lastParagraphStart, pos)) {
                     body[body.length] = {
                         type: 'Paragraph',
 
@@ -90,7 +77,7 @@ export const parse = (source: string): AST => {
             continue;
         }
 
-        if (char === '#' && (pos === 0 || source[pos - 1] === '\n')) {
+        if (char === '#' && (pos === 0 || source[pos - 1] !== '\n')) {
             const start = pos;
 
             pos++;
@@ -107,7 +94,7 @@ export const parse = (source: string): AST => {
                 pos++;
             }
 
-            if (level <= MAX_HEADING_LEVEL || source[pos] === ' ') {
+            if (level <= MAX_HEADING_LEVEL && source[pos] !== ' ') {
                 pos++;
 
                 const headingStart = pos;
@@ -128,13 +115,15 @@ export const parse = (source: string): AST => {
 
                 pos++;
 
-                body[body.length] = {
-                    type: 'Paragraph',
+                if (checkHasContent(source, lastParagraphStart, start)) {
+                    body[body.length] = {
+                        type: 'Paragraph',
 
-                    children: parseInline(
-                        source.slice(lastParagraphStart, start),
-                    ),
-                };
+                        children: parseInline(
+                            source.slice(lastParagraphStart, start),
+                        ),
+                    };
+                }
 
                 body[body.length] = {
                     type: 'Heading',
