@@ -11,11 +11,15 @@ import { MAX_HEADING_LEVEL } from './constants';
  * @returns {AST} AST with markdown nodes from `source`.
  *
  *
- * @example
+ *
+ *
+ * @examples
  *
  * ```typescript
  * const AST = parse('# heading **bold**');
  * ```
+ *
+ *
  */
 
 export const parse = (source: string): AST => {
@@ -30,7 +34,63 @@ export const parse = (source: string): AST => {
     let pos = 0;
 
     while (pos < sourceLength) {
-        if (source[pos] === '#') {
+        const char = source[pos];
+
+        if (char === '\n' || char == '\r') {
+            if (char === '\r') {
+                pos++;
+            }
+
+            let newLineCount = 1;
+
+            while (
+                pos < sourceLength &&
+                (source[pos] === ' ' ||
+                    source[pos] === '\n' ||
+                    source[pos] === '\r')
+            ) {
+                if (source[pos] === '\n') {
+                    newLineCount++;
+                }
+
+                pos++;
+            }
+
+            if (newLineCount > 1) {
+                let hasContent = false;
+
+                let checkIndex = lastParagraphStart;
+
+                while (checkIndex < pos) {
+                    const char = source[checkIndex];
+                    if (
+                        char !== ' ' &&
+                        char !== '\n' &&
+                        char !== '\r' &&
+                        char !== '\t'
+                    ) {
+                        hasContent = true;
+                    }
+                    checkIndex++;
+                }
+
+                if (hasContent) {
+                    body[body.length] = {
+                        type: 'Paragraph',
+
+                        children: parseInline(
+                            source.slice(lastParagraphStart, pos),
+                        ),
+                    };
+                }
+
+                lastParagraphStart = pos;
+            }
+
+            continue;
+        }
+
+        if (char === '#' && (pos === 0 || source[pos - 1] === '\n')) {
             const start = pos;
 
             pos++;
@@ -47,28 +107,9 @@ export const parse = (source: string): AST => {
                 pos++;
             }
 
-            if (level > MAX_HEADING_LEVEL || source[pos] !== ' ') {
-                while (
-                    pos < sourceLength &&
-                    source[pos] !== '\n' &&
-                    source[pos] !== '\r'
-                ) {
-                    pos++;
-                }
-
-                const paragraphEnd = pos;
-
-                if (source[pos] === '\r') {
-                    pos++;
-                }
+            if (level <= MAX_HEADING_LEVEL || source[pos] === ' ') {
                 pos++;
 
-                body[body.length] = {
-                    type: 'Paragraph',
-
-                    children: parseInline(source.slice(start, paragraphEnd)),
-                };
-            } else {
                 const headingStart = pos;
 
                 while (
@@ -84,11 +125,22 @@ export const parse = (source: string): AST => {
                 if (source[pos] === '\r') {
                     pos++;
                 }
+
                 pos++;
 
                 body[body.length] = {
+                    type: 'Paragraph',
+
+                    children: parseInline(
+                        source.slice(lastParagraphStart, start),
+                    ),
+                };
+
+                body[body.length] = {
                     type: 'Heading',
+
                     level: level as HeadingLevel,
+
                     children: parseInline(
                         source.slice(headingStart, headingEnd),
                     ),
@@ -103,9 +155,10 @@ export const parse = (source: string): AST => {
         pos++;
     }
 
-    if (lastParagraphStart !== sourceLength) {
+    if (lastParagraphStart < sourceLength) {
         body[body.length] = {
             type: 'Paragraph',
+
             children: parseInline(source.slice(lastParagraphStart)),
         };
     }
@@ -269,9 +322,10 @@ const parseInline = (source: string): ASTInlineNode[] => {
         pos++;
     }
 
-    if (lastTextStart !== sourceLength) {
+    if (lastTextStart < sourceLength) {
         inlineNode[inlineNode.length] = {
             type: 'Text',
+
             value: source.slice(lastTextStart),
         };
     }
