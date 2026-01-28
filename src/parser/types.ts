@@ -1,31 +1,28 @@
 export type AST = {
-    program: Program;
-};
-
-type Program = ASTNodeBase<'Program'> & {
     body: (Paragraph | FencedCodeBlock | Heading | List | BlockQuote)[];
 };
 
 // Blocks
 
-type Paragraph = ASTNodeBase<'Paragraph'> & { children: ASTInlineNode[] };
+type Paragraph = ASTBlockBase<'Paragraph'> & { children: ASTInlineNode[] };
 
-type Heading = ASTNodeBase<'Heading'> & {
+type Heading = ASTBlockBase<'Heading'> & {
     level: HeadingLevel;
+
     children: ASTInlineNode[];
 };
 
-type List = ASTNodeBase<'List'> & { items: ListItem[] };
-type ListItem = ASTNodeBase<'ListItem'> & {
+type List = ASTBlockBase<'List'> & { items: ListItem[] };
+type ListItem = ASTBlockBase<'ListItem'> & {
     children: (List | ASTInlineNode)[];
 };
 
-type FencedCodeBlock = ASTNodeBase<'FencedCodeBlock'> & {
+type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
     language: string;
     value: string;
 };
 
-type BlockQuote = ASTNodeBase<'BlockQuote'> & {
+type BlockQuote = ASTBlockBase<'BlockQuote'> & {
     children: ASTInlineNode;
 };
 
@@ -37,7 +34,11 @@ type ASTBlockType =
     | 'FencedCodeBlock'
     | 'BlockQuote';
 
-type ASTNodeBase<T extends 'Program' | ASTBlockType> = { type: T };
+/**
+ *
+ * The basic type of AST
+ */
+type ASTBlockBase<T extends ASTBlockType> = { type: T };
 
 export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 

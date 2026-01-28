@@ -17,19 +17,19 @@ import { MAX_HEADING_LEVEL } from './constants';
  * const AST = parse('# heading **bold**');
  * ```
  */
-export const parse = (source: string): AST => {
-    const AST: AST = { program: { type: 'Program', body: [] } };
 
-    const programBody = AST.program.body;
+export const parse = (source: string): AST => {
+    const AST: AST = { body: [] };
+
+    const body = AST.body;
 
     const sourceLength = source.length;
+
+    let lastParagraphStart = 0;
 
     let pos = 0;
 
     while (pos < sourceLength) {
-        if (source[pos] === '\n' || source[pos] === '\r') {
-        }
-
         if (source[pos] === '#') {
             const start = pos;
 
@@ -63,7 +63,7 @@ export const parse = (source: string): AST => {
                 }
                 pos++;
 
-                programBody[programBody.length] = {
+                body[body.length] = {
                     type: 'Paragraph',
 
                     children: parseInline(source.slice(start, paragraphEnd)),
@@ -78,6 +78,7 @@ export const parse = (source: string): AST => {
                 ) {
                     pos++;
                 }
+
                 const headingEnd = pos;
 
                 if (source[pos] === '\r') {
@@ -85,19 +86,28 @@ export const parse = (source: string): AST => {
                 }
                 pos++;
 
-                programBody[programBody.length] = {
+                body[body.length] = {
                     type: 'Heading',
                     level: level as HeadingLevel,
                     children: parseInline(
                         source.slice(headingStart, headingEnd),
                     ),
                 };
+
+                lastParagraphStart = pos;
             }
 
             continue;
         }
 
         pos++;
+    }
+
+    if (lastParagraphStart !== sourceLength) {
+        body[body.length] = {
+            type: 'Paragraph',
+            children: parseInline(source.slice(lastParagraphStart)),
+        };
     }
 
     return AST;
@@ -137,7 +147,8 @@ const parseInline = (source: string): ASTInlineNode[] => {
                     !(
                         source[pos] === '*' &&
                         source[pos + 1] === '*' &&
-                        source[pos + 2] === '*'
+                        source[pos + 2] === '*' &&
+                        source[pos + 3] !== '*'
                     )
                 ) {
                     pos++;
@@ -201,8 +212,6 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
                 if (pos === sourceLength) {
                     pos = italicStart;
-
-                    lastTextStart = pos;
                 } else {
                     inlineNode[inlineNode.length] = {
                         type: 'Text',
@@ -255,14 +264,17 @@ const parseInline = (source: string): ASTInlineNode[] => {
 
             continue;
         }
+
         // fallback
         pos++;
     }
 
-    inlineNode[inlineNode.length] = {
-        type: 'Text',
-        value: source.slice(lastTextStart),
-    };
+    if (lastTextStart !== sourceLength) {
+        inlineNode[inlineNode.length] = {
+            type: 'Text',
+            value: source.slice(lastTextStart),
+        };
+    }
 
     return inlineNode;
 };

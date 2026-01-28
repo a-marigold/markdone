@@ -17,7 +17,7 @@ export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
      *
      * The body of `AST.program`
      */
-    const body = AST.program.body;
+    const body = AST.body;
 
     const bodyLength = body.length;
 
@@ -47,7 +47,7 @@ export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
                 cssClasses.heading +
                 '">' +
                 generateInline(currentNode.children, cssClasses) +
-                '<h' +
+                '</h' +
                 currentNode.level +
                 '>';
 
@@ -70,6 +70,7 @@ const generateInline = (
     const nodesLength = inlineNodes.length;
 
     let pos = 0;
+
     while (pos < nodesLength) {
         const currentNode = inlineNodes[pos];
 
