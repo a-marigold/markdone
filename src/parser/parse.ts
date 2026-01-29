@@ -167,6 +167,9 @@ export const parse = (source: string): AST => {
  * #### Parses Inline markdown (Emphasis, Text).
  *
  * @param {string} source Source string of line to be parsed.
+ * @param {number} start start position of part of `source` to be parsed.
+ * @param {number} end end position of part of `source` to be parsed.
+ *
  * @returns {ASTInlineNode[]} Array with `ASTInlineNode`\`s.
  *
  */
