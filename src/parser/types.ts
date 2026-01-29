@@ -19,11 +19,16 @@ type ListItem = ASTBlockBase<'ListItem'> & {
 
 type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
     language: string;
+
     value: string;
 };
 
-type BlockQuote = ASTBlockBase<'BlockQuote'> & {
-    children: ASTInlineNode;
+export type BlockQuote = ASTBlockBase<'BlockQuote'> & {
+    children: AST['body'] extends (infer T)[]
+        ? Exclude<T, BlockQuote>[]
+        : never;
+
+    depth: number;
 };
 
 type ASTBlockType =

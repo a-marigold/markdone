@@ -1,1 +1,0 @@
-export { getHtmlFromMd } from './getHtmlFromMd';
