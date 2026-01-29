@@ -23,12 +23,8 @@ type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
     value: string;
 };
 
-export type BlockQuote = ASTBlockBase<'BlockQuote'> & {
-    children: AST['body'] extends (infer T)[]
-        ? Exclude<T, BlockQuote>[]
-        : never;
-
-    depth: number;
+type BlockQuote = ASTBlockBase<'BlockQuote'> & {
+    children: AST['body'];
 };
 
 type ASTBlockType =

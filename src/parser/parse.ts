@@ -1,4 +1,4 @@
-import type { AST, ASTInlineNode, BlockQuote, HeadingLevel } from './types';
+import type { AST, ASTInlineNode, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
 import { checkHasContent } from './utils';
@@ -13,8 +13,8 @@ import { checkHasContent } from './utils';
  *
  *
  *
- * @param {number} start Start position of part of `source` to be checked.
- * @param {number} end End position of part of `source` to be checked.
+ * @param {number} sourceStart Start position of part of `source` to be checked.
+ * @param {number} sourceEnd End position of part of `source` to be checked.
  *
  *
  *
@@ -41,32 +41,73 @@ import { checkHasContent } from './utils';
  *
  *
  *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
 
-export const parse = (source: string, start: number, end: number): AST => {
+export const parse = (
+    source: string,
+    sourceStart: number,
+    sourceEnd: number,
+): AST => {
     const AST: AST = { body: [] };
 
-    /** The `body` of AST */
+    /**
+     * The `body` of the `AST`
+     *
+     */
 
     const body = AST.body;
 
-    let lastParagraphStart = 0;
+    /**
+     * Last position of `Paragraph` start.
+     * Should be moved every time when the `pos` might be a `Paragraph` start.
+     *
+     *
+     *
+     * @example
+     * ```typescript
+     * if(source[pos] === '#') {
+     *   // ...(heading handling logic)
+     *   // the heading ends
+     *   lastParagraphStart = end; // move the `lastParagraphStart` because there can be new `Paragraph` after end of heading
+     *
+     * }
+     * ```
+     */
 
-    let pos = start;
+    let lastParagraphStart: number = 0;
 
-    while (pos < end) {
+    let pos: number = sourceStart;
+
+    main: while (pos < sourceEnd) {
         const char = source[pos];
 
         if (char === '\n' || char === '\r') {
             if (char === '\r') {
                 pos++;
             }
+
             pos++;
 
             let newLineCount = 1;
 
             while (
-                pos < end &&
+                pos < sourceEnd &&
                 (source[pos] === ' ' ||
                     source[pos] === '\n' ||
                     source[pos] === '\r')
@@ -74,7 +115,6 @@ export const parse = (source: string, start: number, end: number): AST => {
                 if (source[pos] === '\n') {
                     newLineCount++;
                 }
-
                 pos++;
             }
 
@@ -89,7 +129,6 @@ export const parse = (source: string, start: number, end: number): AST => {
 
                 lastParagraphStart = pos;
             }
-
             continue;
         }
 
@@ -100,7 +139,11 @@ export const parse = (source: string, start: number, end: number): AST => {
 
             let level = 1;
 
-            while (pos < end && source[pos] === '#' && source[pos] !== ' ') {
+            while (
+                pos < sourceEnd &&
+                source[pos] === '#' &&
+                source[pos] !== ' '
+            ) {
                 level++;
 
                 pos++;
@@ -112,7 +155,7 @@ export const parse = (source: string, start: number, end: number): AST => {
                 const headingStart = pos;
 
                 while (
-                    pos < end &&
+                    pos < sourceEnd &&
                     source[pos] !== '\n' &&
                     source[pos] !== '\r'
                 ) {
@@ -155,49 +198,56 @@ export const parse = (source: string, start: number, end: number): AST => {
             continue;
         }
 
-        if (char === '>') {
+        if (char === '>' && (pos === 0 || source[pos - 1] === '\n')) {
             pos++;
 
-            let depth = 1;
+            let blockQuoteContent: string = '';
 
-            while (pos < end && (source[pos] === ' ' || source[pos] === '>')) {
-                if (source[pos] === '>') {
-                    depth++;
+            let lastBlockQuoteStart: number = 0;
+
+            blockQuote: while (pos < sourceEnd) {
+                if (source[pos] === '\n' || source[pos] === '\r') {
+                    if (source[pos] === '\r') {
+                        pos++;
+                    }
+                    pos++;
+
+                    const blockQuoteEnd = pos;
+
+                    blockQuoteContent += source.slice(
+                        lastBlockQuoteStart,
+                        blockQuoteEnd,
+                    );
+                    lastBlockQuoteStart = blockQuoteEnd;
+
+                    if (source[pos] === '>') {
+                        continue blockQuote;
+                    } else {
+                        break blockQuote;
+                    }
                 }
 
                 pos++;
             }
 
-            const blockQuoteStart = pos;
-
-            while (pos < end && source[pos] !== '\n' && source[pos] !== '\r') {
-                pos++;
-            }
-
-            const blockQuoteEnd = pos;
-
-            if (source[pos] === '\r') {
-                pos++;
-            }
-            pos++;
-
             body[body.length] = {
                 type: 'BlockQuote',
-                children: parse(source, blockQuoteStart, blockQuoteEnd)
-                    .body as BlockQuote['children'],
-                depth,
+                children: parse(blockQuoteContent, 0, blockQuoteContent.length)
+                    .body,
             };
+
+            continue;
         }
 
         // fallback
         pos++;
     }
 
-    if (lastParagraphStart < end) {
+    if (lastParagraphStart < sourceEnd) {
         body[body.length] = {
             type: 'Paragraph',
 
-            children: parseInline(source, lastParagraphStart, end),
+            children: parseInline(source, lastParagraphStart, sourceEnd),
         };
     }
 
