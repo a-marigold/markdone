@@ -1,4 +1,4 @@
-import type { AST, ASTInlineNode, HeadingLevel } from './types';
+import type { AST, ASTInlineNode, BlockQuote, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
 import { checkHasContent } from './utils';
@@ -13,14 +13,24 @@ import { checkHasContent } from './utils';
  *
  *
  *
+ * @param {number} start Start position of part of `source` to be checked.
+ * @param {number} end End position of part of `source` to be checked.
+ *
+ *
+ *
  * @returns {AST} AST with markdown nodes from `source`.
  *
  *
  * @examples
  *
  * ```typescript
- * const AST = parse('# heading **bold**');
+ * const source = '# heading **bold**';
+ * const AST = parse(source, 0, source.length);
  * ```
+ *
+ *
+ *
+ *
  *
  *
  *
@@ -33,18 +43,18 @@ import { checkHasContent } from './utils';
  *
  */
 
-export const parse = (source: string): AST => {
+export const parse = (source: string, start: number, end: number): AST => {
     const AST: AST = { body: [] };
+
+    /** The `body` of AST */
 
     const body = AST.body;
 
-    const sourceLength = source.length;
-
     let lastParagraphStart = 0;
 
-    let pos = 0;
+    let pos = start;
 
-    while (pos < sourceLength) {
+    while (pos < end) {
         const char = source[pos];
 
         if (char === '\n' || char === '\r') {
@@ -56,7 +66,7 @@ export const parse = (source: string): AST => {
             let newLineCount = 1;
 
             while (
-                pos < sourceLength &&
+                pos < end &&
                 (source[pos] === ' ' ||
                     source[pos] === '\n' ||
                     source[pos] === '\r')
@@ -90,23 +100,19 @@ export const parse = (source: string): AST => {
 
             let level = 1;
 
-            while (
-                pos < sourceLength &&
-                source[pos] === '#' &&
-                source[pos] !== ' '
-            ) {
+            while (pos < end && source[pos] === '#' && source[pos] !== ' ') {
                 level++;
 
                 pos++;
             }
 
-            if (level <= MAX_HEADING_LEVEL && source[pos] !== ' ') {
+            if (level <= MAX_HEADING_LEVEL && source[pos] === ' ') {
                 pos++;
 
                 const headingStart = pos;
 
                 while (
-                    pos < sourceLength &&
+                    pos < end &&
                     source[pos] !== '\n' &&
                     source[pos] !== '\r'
                 ) {
@@ -149,14 +155,49 @@ export const parse = (source: string): AST => {
             continue;
         }
 
+        if (char === '>') {
+            pos++;
+
+            let depth = 1;
+
+            while (pos < end && (source[pos] === ' ' || source[pos] === '>')) {
+                if (source[pos] === '>') {
+                    depth++;
+                }
+
+                pos++;
+            }
+
+            const blockQuoteStart = pos;
+
+            while (pos < end && source[pos] !== '\n' && source[pos] !== '\r') {
+                pos++;
+            }
+
+            const blockQuoteEnd = pos;
+
+            if (source[pos] === '\r') {
+                pos++;
+            }
+            pos++;
+
+            body[body.length] = {
+                type: 'BlockQuote',
+                children: parse(source, blockQuoteStart, blockQuoteEnd)
+                    .body as BlockQuote['children'],
+                depth,
+            };
+        }
+
+        // fallback
         pos++;
     }
 
-    if (lastParagraphStart < sourceLength) {
+    if (lastParagraphStart < end) {
         body[body.length] = {
             type: 'Paragraph',
 
-            children: parseInline(source, lastParagraphStart, sourceLength),
+            children: parseInline(source, lastParagraphStart, end),
         };
     }
 
