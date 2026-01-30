@@ -13,8 +13,7 @@ import type { MarkdownCSSClasses } from './types';
  *
  *
  *
- *
- * @returns {string}
+ * @returns {string} Generated HTML
  *
  * @example
  * ```typescript
@@ -26,14 +25,6 @@ import type { MarkdownCSSClasses } from './types';
  * <h3 class='heading-classname'>heading 3</h3>
  * ```
  *
- * @example
- * ```typescript
- * const markdownContainer = document.querySelector('.markdown-container');
- *
- * const input = document.querySelector('input');
- * input.addEventListener('input', (event) => {
- *   markdownContainer.setHTMLUnsafe(generate(parse(event.target.value).body, {}));
- * })
  *
  */
 
@@ -87,6 +78,8 @@ export const generate = (
                 '">' +
                 generate(currentNode.children, cssClasses) +
                 '</blockquote>';
+
+            pos++;
 
             continue;
         }

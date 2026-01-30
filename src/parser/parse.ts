@@ -30,33 +30,6 @@ import { checkHasContent } from './utils';
  *
  *
  *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
  */
 
 export const parse = (
@@ -69,25 +42,32 @@ export const parse = (
     /**
      * The `body` of the `AST`
      *
+     *
      */
 
     const body = AST.body;
 
     /**
      * Last position of `Paragraph` start.
+     *
      * Should be moved every time when the `pos` might be a `Paragraph` start.
      *
      *
      *
      * @example
-     * ```typescript
+     *
+     * ```typescripts
+     *
      * if(source[pos] === '#') {
      *   // ...(heading handling logic)
+     *
      *   // the heading ends
+     *
      *   lastParagraphStart = end; // move the `lastParagraphStart` because there can be new `Paragraph` after end of heading
      *
      * }
      * ```
+     *
      */
 
     let lastParagraphStart: number = 0;
@@ -101,7 +81,6 @@ export const parse = (
             if (char === '\r') {
                 pos++;
             }
-
             pos++;
 
             let newLineCount = 1;
@@ -115,6 +94,7 @@ export const parse = (
                 if (source[pos] === '\n') {
                     newLineCount++;
                 }
+
                 pos++;
             }
 
@@ -129,7 +109,7 @@ export const parse = (
 
                 lastParagraphStart = pos;
             }
-            continue;
+            continue main;
         }
 
         if (char === '#' && (pos === 0 || source[pos - 1] !== '\n')) {
@@ -195,7 +175,7 @@ export const parse = (
                 lastParagraphStart = pos;
             }
 
-            continue;
+            continue main;
         }
 
         if (char === '>' && (pos === 0 || source[pos - 1] === '\n')) {
@@ -203,7 +183,7 @@ export const parse = (
 
             let blockQuoteContent: string = '';
 
-            let lastBlockQuoteStart: number = 0;
+            let lastBlockQuoteStart: number = pos;
 
             blockQuote: while (pos < sourceEnd) {
                 if (source[pos] === '\n' || source[pos] === '\r') {
@@ -216,6 +196,7 @@ export const parse = (
 
                     blockQuoteContent += source.slice(
                         lastBlockQuoteStart,
+
                         blockQuoteEnd,
                     );
                     lastBlockQuoteStart = blockQuoteEnd;
@@ -236,7 +217,7 @@ export const parse = (
                     .body,
             };
 
-            continue;
+            continue main;
         }
 
         // fallback
