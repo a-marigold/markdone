@@ -2,29 +2,53 @@ import type { AST, ASTInlineNode } from '../parser';
 
 import type { MarkdownCSSClasses } from './types';
 
-// TODO: remove the htmlTags constant
 /**
+ * #### Generates HTML from provided `AST` with markdown nodes
  *
  *
- * @param {AST} AST
- * @param {MarkdownCSSClasses} cssClasses
+ * @param {AST['body']} ASTBody Abstract Syntax Tree body (`AST['body']`) with markdown nodes
  *
- * @returns
+ * @param {MarkdownCSSClasses} cssClasses object with CSS classes for markdown nodes
+ *
+ *
+ *
+ *
+ *
+ * @returns {string}
+ *
+ * @example
+ * ```typescript
+ * const ast = parse('### heading 3');
+ * const html = generate(ast.body, { heading: 'heading-classname' });
+ * ```
+ * Real output:
+ * ```html
+ * <h3 class='heading-classname'>heading 3</h3>
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const markdownContainer = document.querySelector('.markdown-container');
+ *
+ * const input = document.querySelector('input');
+ * input.addEventListener('input', (event) => {
+ *   markdownContainer.setHTMLUnsafe(generate(parse(event.target.value).body, {}));
+ * })
+ *
  */
-export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
-    let generated = '';
-    /**
-     *
-     * The body of `AST.program`
-     */
-    const body = AST.body;
 
-    const bodyLength = body.length;
+export const generate = (
+    ASTBody: AST['body'],
+    cssClasses: MarkdownCSSClasses,
+): string => {
+    let generated = '';
+
+    const bodyLength = ASTBody.length;
 
     let pos = 0;
 
     while (pos < bodyLength) {
-        const currentNode = body[pos];
+        const currentNode = ASTBody[pos];
 
         if (currentNode.type === 'Paragraph') {
             generated +=
@@ -55,6 +79,20 @@ export const generate = (AST: AST, cssClasses: MarkdownCSSClasses): string => {
 
             continue;
         }
+
+        if (currentNode.type === 'BlockQuote') {
+            generated +=
+                '<blockquote class="' +
+                cssClasses.blockQuote +
+                '">' +
+                generate(currentNode.children, cssClasses) +
+                '</blockquote>';
+
+            continue;
+        }
+
+        // fallback
+        pos++;
     }
 
     return generated;
@@ -91,6 +129,7 @@ const generateInline = (
                 '</strong>';
 
             pos++;
+
             continue;
         }
 
@@ -125,7 +164,7 @@ const generateInline = (
 
         if (currentNode.type === 'InlineCode') {
             generated +=
-                '<code class=' +
+                '<code class="' +
                 cssClasses.code +
                 '">' +
                 currentNode.value +
@@ -136,6 +175,7 @@ const generateInline = (
             continue;
         }
 
+        // fallback
         pos++;
     }
 
