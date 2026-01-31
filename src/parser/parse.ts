@@ -50,7 +50,9 @@ export const parse = (
     /**
      * Last position of `Paragraph` start.
      *
+     *
      * Should be moved every time when the `pos` might be a `Paragraph` start.
+     *
      *
      *
      *
@@ -68,6 +70,7 @@ export const parse = (
      * }
      * ```
      *
+     *
      */
 
     let lastParagraphStart: number = 0;
@@ -81,15 +84,17 @@ export const parse = (
             if (char === '\r') {
                 pos++;
             }
+
             pos++;
 
-            let newParagraphEnd = lastParagraphStart;
+            let newParagraphEnd: number = lastParagraphStart;
 
             let newLineCount: number = 1;
 
             while (
                 pos < sourceEnd &&
                 (source[pos] === ' ' ||
+                    source[pos] === '\t' ||
                     source[pos] === '\n' ||
                     source[pos] === '\r')
             ) {
@@ -104,11 +109,17 @@ export const parse = (
             }
 
             if (newLineCount > 1) {
-                if (checkHasContent(source, lastParagraphStart, pos)) {
+                if (
+                    checkHasContent(source, lastParagraphStart, newParagraphEnd)
+                ) {
                     body[body.length] = {
                         type: 'Paragraph',
 
-                        children: parseInline(source, lastParagraphStart, pos),
+                        children: parseInline(
+                            source,
+                            lastParagraphStart,
+                            newParagraphEnd,
+                        ),
                     };
                 }
 
