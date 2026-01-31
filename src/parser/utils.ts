@@ -1,13 +1,13 @@
 /**
- * #### Checks the `source` on containing any symbol except ' ', '\n', '\r' and '\t'
+ * #### Checks the `source` string section from `start` to `end` on containing any symbol except ' ', '\n', '\r' and '\t'.
  *
  *
  *
  * @param {string} source source string to be checked.
  *
- * @param {number} start start of part of string that is checking
+ * @param {number} start start position of part of string that is checking (including).
  *
- * @param {number} end end of part of string that is checking.
+ * @param {number} end end position of part of string that is checking (excluding).
  *
  * @returns {boolean} `true`, if the `source` contains any symbol expect empty symbols. Otherwise returns `false`.
  *

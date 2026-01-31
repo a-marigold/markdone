@@ -183,7 +183,28 @@ export const parse = (
             continue main;
         }
 
-        if (char === '>' && (pos === 0 || source[pos - 1] === '\n')) {
+        if (char === '>') {
+            let checkPos = pos - 1;
+            checkBlockQuote: while (checkPos > sourceStart) {
+                const checkChar = source[checkPos];
+
+                if (
+                    checkChar !== ' ' &&
+                    checkChar !== '\t' &&
+                    checkChar !== '\n' &&
+                    checkChar !== '\r'
+                ) {
+                    pos++;
+
+                    continue main;
+                }
+
+                if (checkChar === '\n' || checkPos === sourceStart) {
+                    break checkBlockQuote;
+                }
+                checkPos--;
+            }
+
             const start = pos;
 
             pos++;
@@ -207,13 +228,25 @@ export const parse = (
                         blockQuoteEnd,
                     );
 
-                    if (source[pos] === '>') {
-                        pos++;
-                        lastBlockQuoteStart = pos;
+                    while (pos < sourceEnd) {
+                        let blockQuoteChar = source[pos];
 
-                        continue blockQuote;
-                    } else {
-                        break blockQuote;
+                        if (blockQuoteChar === '>') {
+                            pos++;
+
+                            lastBlockQuoteStart = pos;
+
+                            continue blockQuote;
+                        }
+
+                        if (
+                            blockQuoteChar !== ' ' &&
+                            blockQuoteContent !== '\t'
+                        ) {
+                            break blockQuote;
+                        }
+
+                        pos++;
                     }
                 }
 
