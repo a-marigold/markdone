@@ -17,13 +17,16 @@
 
         "strict": true,
         "skipLibCheck": true,
+
         "noFallthroughCasesInSwitch": true,
+
         "noUncheckedIndexedAccess": false,
         "noImplicitOverride": true,
 
         // Some stricter flags (disabled by default)
         "noUnusedLocals": true,
         "noUnusedParameters": true,
+
         "noPropertyAccessFromIndexSignature": false
     },
     "include": ["./src", "src/parser/parse.ts"],

@@ -83,7 +83,9 @@ export const parse = (
             }
             pos++;
 
-            let newLineCount = 1;
+            let newParagraphEnd = lastParagraphStart;
+
+            let newLineCount: number = 1;
 
             while (
                 pos < sourceEnd &&
@@ -93,6 +95,9 @@ export const parse = (
             ) {
                 if (source[pos] === '\n') {
                     newLineCount++;
+                }
+                if (newLineCount === 2) {
+                    newParagraphEnd = pos;
                 }
 
                 pos++;
@@ -179,6 +184,8 @@ export const parse = (
         }
 
         if (char === '>' && (pos === 0 || source[pos - 1] === '\n')) {
+            const start = pos;
+
             pos++;
 
             let blockQuoteContent: string = '';
@@ -199,9 +206,11 @@ export const parse = (
 
                         blockQuoteEnd,
                     );
-                    lastBlockQuoteStart = blockQuoteEnd;
 
                     if (source[pos] === '>') {
+                        pos++;
+                        lastBlockQuoteStart = pos;
+
                         continue blockQuote;
                     } else {
                         break blockQuote;
@@ -211,11 +220,19 @@ export const parse = (
                 pos++;
             }
 
+            if (checkHasContent(source, lastParagraphStart, start)) {
+                body[body.length] = {
+                    type: 'Paragraph',
+                    children: parseInline(source, lastParagraphStart, start),
+                };
+            }
             body[body.length] = {
                 type: 'BlockQuote',
                 children: parse(blockQuoteContent, 0, blockQuoteContent.length)
                     .body,
             };
+
+            lastParagraphStart = pos;
 
             continue main;
         }

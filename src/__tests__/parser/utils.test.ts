@@ -7,13 +7,12 @@ describe('checkHasContent', () => {
         const string = ' abcdef \r\n';
 
         expect(checkHasContent(string, 1, string.length)).toBe(true);
-        expect(checkHasContent(string, 0, string.length)).toBe(false);
+        expect(checkHasContent(string, 0, 1)).toBe(false);
         expect(checkHasContent(string, 8, string.length)).toBe(false);
     });
 
     it('should return false if the `source` contains only empty characters', () => {
         const string = '\t\t\t\t \n \r\n \r\n \n     ';
-
         expect(checkHasContent(string, 0, string.length)).toBe(false);
     });
 
