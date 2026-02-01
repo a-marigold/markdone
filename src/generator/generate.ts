@@ -71,6 +71,21 @@ export const generate = (
             continue;
         }
 
+        if (currentNode.type === 'FencedCodeBlock') {
+            generated +=
+                '<pre class="' +
+                cssClasses.fencedCodeBlockPre +
+                '"><code class="' +
+                cssClasses.fencedCodeBlockCode +
+                '">' +
+                currentNode.value +
+                '</code></pre>';
+
+            pos++;
+
+            continue;
+        }
+
         if (currentNode.type === 'BlockQuote') {
             generated +=
                 '<blockquote class="' +
@@ -158,7 +173,7 @@ const generateInline = (
         if (currentNode.type === 'InlineCode') {
             generated +=
                 '<code class="' +
-                cssClasses.code +
+                cssClasses.inlineCode +
                 '">' +
                 currentNode.value +
                 '</code>';
