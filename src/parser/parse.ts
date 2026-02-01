@@ -1,7 +1,7 @@
 import type { AST, ASTInlineNode, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
-import { checkHasContent } from './utils';
+import { checkHasContent, checkStartOfLine } from './utils';
 
 /**
  *
@@ -131,7 +131,7 @@ export const parse = (
             continue main;
         }
 
-        if (char === '#' && (pos === 0 || source[pos - 1] !== '\n')) {
+        if (char === '#' && checkStartOfLine(source, sourceStart, pos - 1)) {
             const start = pos;
 
             pos++;
@@ -200,7 +200,8 @@ export const parse = (
         if (
             source[pos] === '`' &&
             source[pos + 1] === '`' &&
-            source[pos + 2] === '`'
+            source[pos + 2] === '`' &&
+            checkStartOfLine(source, sourceStart, pos - 1)
         ) {
             const paragraphEnd = pos;
 
@@ -224,19 +225,9 @@ export const parse = (
                 if (
                     source[pos] === '`' &&
                     source[pos + 1] === '`' &&
-                    source[pos + 2] === '`'
+                    source[pos + 2] === '`' &&
+                    checkStartOfLine(source, sourceStart, pos - 1)
                 ) {
-                    let checkPos = pos - 1;
-                    while (source[checkPos] !== '\n') {
-                        if (
-                            source[checkPos] !== ' ' &&
-                            source[checkPos] !== '\t'
-                        ) {
-                            continue fencedCodeBlock;
-                        }
-                        checkPos--;
-                    }
-
                     break fencedCodeBlock;
                 }
 
@@ -271,8 +262,7 @@ export const parse = (
             continue;
         }
 
-        if (char === '>') {
-            // TODO: add reusable checkNewLine function
+        if (char === '>' && checkStartOfLine(source, sourceStart, pos - 1)) {
             let checkPos = pos - 1;
             checkBlockQuote: while (checkPos > sourceStart) {
                 const checkChar = source[checkPos];
