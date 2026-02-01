@@ -26,6 +26,9 @@ import { checkHasContent } from './utils';
  * ```typescript
  * const source = '# heading **bold**';
  * const AST = parse(source, 0, source.length);
+ *
+ *
+ *
  * ```
  *
  *
@@ -194,7 +197,82 @@ export const parse = (
             continue main;
         }
 
+        if (
+            source[pos] === '`' &&
+            source[pos + 1] === '`' &&
+            source[pos + 2] === '`'
+        ) {
+            const paragraphEnd = pos;
+
+            pos += 3;
+
+            const codeStart = pos;
+
+            while (
+                pos < sourceEnd &&
+                source[pos] !== ' ' &&
+                source[pos] !== '\t' &&
+                source[pos] !== '\n' &&
+                source[pos] !== '\r'
+            ) {
+                pos++;
+            }
+
+            const language = source.slice(codeStart, pos);
+
+            fencedCodeBlock: while (pos < sourceEnd) {
+                if (
+                    source[pos] === '`' &&
+                    source[pos + 1] === '`' &&
+                    source[pos + 2] === '`'
+                ) {
+                    let checkPos = pos - 1;
+                    while (source[checkPos] !== '\n') {
+                        if (
+                            source[checkPos] !== ' ' &&
+                            source[checkPos] !== '\t'
+                        ) {
+                            continue fencedCodeBlock;
+                        }
+                        checkPos--;
+                    }
+
+                    break fencedCodeBlock;
+                }
+
+                pos++;
+            }
+
+            const codeEnd = pos;
+
+            pos += 3;
+
+            if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
+                body[body.length] = {
+                    type: 'Paragraph',
+                    children: parseInline(
+                        source,
+                        lastParagraphStart,
+                        paragraphEnd,
+                    ),
+                };
+            }
+
+            body[body.length] = {
+                type: 'FencedCodeBlock',
+
+                language,
+
+                value: source.slice(codeStart, codeEnd),
+            };
+
+            lastParagraphStart = pos;
+
+            continue;
+        }
+
         if (char === '>') {
+            // TODO: add reusable checkNewLine function
             let checkPos = pos - 1;
             checkBlockQuote: while (checkPos > sourceStart) {
                 const checkChar = source[checkPos];
