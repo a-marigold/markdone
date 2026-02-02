@@ -86,6 +86,40 @@ export const generate = (
             continue;
         }
 
+        if (currentNode.type === 'List') {
+            generated += '<ul class="' + cssClasses.unorderedList + '">';
+
+            /**
+             *
+             * Used for better performance, because reading of `cssClasses` object in items loop is heavy operation
+             */
+
+            const openedLi = '<li class="' + cssClasses.listItem + '">';
+
+            const closedLi = '</li>';
+
+            const items = currentNode.items;
+
+            const itemsLength = items.length;
+
+            let itemIndex = 0;
+
+            while (itemIndex < itemsLength) {
+                generated +=
+                    openedLi +
+                    generate(items[itemIndex].children, cssClasses) +
+                    closedLi;
+
+                itemIndex++;
+            }
+
+            generated += '</ul>';
+
+            pos++;
+
+            continue;
+        }
+
         if (currentNode.type === 'BlockQuote') {
             generated +=
                 '<blockquote class="' +
