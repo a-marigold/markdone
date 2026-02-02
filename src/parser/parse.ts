@@ -1,4 +1,4 @@
-import type { AST, ASTInlineNode, HeadingLevel } from './types';
+import type { AST, ASTInlineNode, List, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
 import { checkHasContent, checkStartOfLine } from './utils';
@@ -11,9 +11,8 @@ import { checkHasContent, checkStartOfLine } from './utils';
  *
  * @param {string} source Source markdown string to be parsed.
  *
- *
- *
  * @param {number} sourceStart Start position of part of `source` to be checked.
+ *
  * @param {number} sourceEnd End position of part of `source` to be checked.
  *
  *
@@ -46,6 +45,7 @@ export const parse = (
      * The `body` of the `AST`
      *
      *
+     *
      */
 
     const body = AST.body;
@@ -74,9 +74,10 @@ export const parse = (
      * ```
      *
      *
+     *
      */
 
-    let lastParagraphStart: number = 0;
+    let lastParagraphStart: number = sourceStart;
 
     let pos: number = sourceStart;
 
@@ -121,6 +122,7 @@ export const parse = (
                         children: parseInline(
                             source,
                             lastParagraphStart,
+
                             newParagraphEnd,
                         ),
                     };
@@ -262,8 +264,100 @@ export const parse = (
             continue;
         }
 
+        if (
+            (char === '-' || char === '*' || char === '+') &&
+            source[pos + 1] === ' ' &&
+            checkStartOfLine(source, sourceStart, pos - 1)
+        ) {
+            const paragraphEnd = pos;
+
+            pos += 2;
+
+            const listItems: List['items'] = [];
+
+            let lastItemContentStart = pos;
+
+            list: while (pos < sourceEnd) {
+                const itemChar = source[pos];
+                if (itemChar === '\n' || itemChar === '\r') {
+                    const itemContentEnd = pos;
+
+                    listItems[listItems.length] = {
+                        type: 'ListItem',
+                        children: parse(
+                            source,
+                            lastItemContentStart,
+                            itemContentEnd,
+                        ).body,
+                        items: [],
+                    };
+
+                    if (source[pos] === '\r') {
+                        pos++;
+                    }
+                    pos++;
+
+                    while (pos < sourceEnd) {
+                        if (
+                            source[pos] === '-' ||
+                            source[pos] === '*' ||
+                            source[pos] === '+'
+                        ) {
+                            pos++;
+
+                            if (source[pos] !== ' ') {
+                                break list;
+                            }
+
+                            pos++;
+
+                            lastItemContentStart = pos;
+
+                            continue list;
+                        }
+
+                        if (
+                            source[pos] !== ' ' &&
+                            source[pos] !== '\t' &&
+                            source[pos] !== '\n'
+                        ) {
+                            break list;
+                        }
+
+                        pos++;
+                    }
+                }
+
+                pos++;
+            }
+
+            if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
+                body[body.length] = {
+                    type: 'Paragraph',
+
+                    children: parseInline(
+                        source,
+
+                        lastParagraphStart,
+                        paragraphEnd,
+                    ),
+                };
+            }
+
+            body[body.length] = {
+                type: 'List',
+
+                items: listItems,
+            };
+
+            lastParagraphStart = pos;
+
+            continue;
+        }
+
         if (char === '>' && checkStartOfLine(source, sourceStart, pos - 1)) {
             let checkPos = pos - 1;
+
             checkBlockQuote: while (checkPos > sourceStart) {
                 const checkChar = source[checkPos];
 

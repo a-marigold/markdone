@@ -2,6 +2,7 @@ export type AST = {
     body: (Paragraph | FencedCodeBlock | Heading | List | BlockQuote)[];
 };
 
+//
 // Blocks
 
 type Paragraph = ASTBlockBase<'Paragraph'> & { children: ASTInlineNode[] };
@@ -12,9 +13,10 @@ type Heading = ASTBlockBase<'Heading'> & {
     children: ASTInlineNode[];
 };
 
-type List = ASTBlockBase<'List'> & { items: ListItem[] };
+export type List = ASTBlockBase<'List'> & { items: ListItem[] };
 type ListItem = ASTBlockBase<'ListItem'> & {
-    children: (List | ASTInlineNode)[];
+    children: AST['body'];
+    items: List['items'];
 };
 
 type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
