@@ -1,7 +1,8 @@
-import type { AST, ASTInlineNode, List, HeadingLevel } from './types';
+import type { AST, ASTInlineNode, List, ListItem, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
 import { checkHasContent, checkStartOfLine } from './utils';
+import { __parserLog__ } from '../__tests__/utils';
 
 /**
  *
@@ -80,7 +81,7 @@ export const parse = (
     let lastParagraphStart: number = sourceStart;
 
     let pos: number = sourceStart;
-
+    console.log('__THE START__');
     main: while (pos < sourceEnd) {
         const char = source[pos];
 
@@ -243,14 +244,19 @@ export const parse = (
             if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
                 body[body.length] = {
                     type: 'Paragraph',
+
                     children: parseInline(
                         source,
+
                         lastParagraphStart,
+
                         paragraphEnd,
                     ),
                 };
             }
+            /*
 
+            */
             body[body.length] = {
                 type: 'FencedCodeBlock',
 
@@ -271,70 +277,84 @@ export const parse = (
         ) {
             const paragraphEnd = pos;
 
+            const rootItems: List['items'] = [];
+
+            const listStack: { indent: number; items: List['items'] }[] = [
+                { indent: 0, items: rootItems },
+            ];
+
             pos += 2;
 
-            const listItems: List['items'] = [];
-
-            let lastItemContentStart = pos;
-
             list: while (pos < sourceEnd) {
-                const itemChar = source[pos];
-                if (itemChar === '\n' || itemChar === '\r') {
-                    const itemContentEnd = pos;
+                const itemContentStart = pos;
 
-                    listItems[listItems.length] = {
-                        type: 'ListItem',
-                        children: parse(
-                            source,
-                            lastItemContentStart,
-                            itemContentEnd,
-                        ).body,
-                        items: [],
-                    };
-
-                    if (source[pos] === '\r') {
-                        pos++;
-                    }
+                while (source[pos] !== '\n' && source[pos] !== '\r') {
                     pos++;
+                }
 
-                    while (pos < sourceEnd) {
-                        if (
-                            source[pos] === '-' ||
-                            source[pos] === '*' ||
-                            source[pos] === '+'
-                        ) {
-                            pos++;
+                const newItem: ListItem = {
+                    type: 'ListItem',
 
-                            if (source[pos] !== ' ') {
-                                break list;
-                            }
+                    children: parse(source, itemContentStart, pos).body,
+                    items: [],
+                };
+                const currentLevel = listStack[listStack.length - 1];
 
-                            pos++;
+                const currentLevelItems = currentLevel.items;
 
-                            lastItemContentStart = pos;
+                currentLevelItems[currentLevelItems.length] = newItem;
 
-                            continue list;
-                        }
-
-                        if (
-                            source[pos] !== ' ' &&
-                            source[pos] !== '\t' &&
-                            source[pos] !== '\n'
-                        ) {
-                            break list;
-                        }
-
-                        pos++;
-                    }
+                if (source[pos] === '\r') {
+                    pos++;
                 }
 
                 pos++;
+
+                let newLineIndent = 0;
+
+                while (
+                    source[pos] === ' ' ||
+                    source[pos] === '\t' ||
+                    source[pos] === '\n' ||
+                    source[pos] === '\r'
+                ) {
+                    if (source[pos] === ' ') {
+                        newLineIndent++;
+                    } else if (source[pos] === '\t') {
+                        newLineIndent += 2;
+                    }
+                    pos++;
+                }
+
+                if (
+                    (source[pos] !== '-' &&
+                        source[pos] !== '*' &&
+                        source[pos] !== '+') ||
+                    source[pos + 1] !== ' '
+                ) {
+                    console.log('BREAK');
+                    break list;
+                }
+
+                pos += 2;
+
+                if (newLineIndent - currentLevel.indent > 1) {
+                    listStack[listStack.length] = {
+                        indent: newLineIndent,
+                        items: newItem.items,
+                    };
+                } else {
+                    while (
+                        listStack[listStack.length - 1].indent > newLineIndent
+                    ) {
+                        listStack.length--;
+                    }
+                }
             }
 
             if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
                 body[body.length] = {
                     type: 'Paragraph',
-
                     children: parseInline(
                         source,
 
@@ -347,7 +367,7 @@ export const parse = (
             body[body.length] = {
                 type: 'List',
 
-                items: listItems,
+                items: rootItems,
             };
 
             lastParagraphStart = pos;
@@ -356,6 +376,7 @@ export const parse = (
         }
 
         if (char === '>' && checkStartOfLine(source, sourceStart, pos - 1)) {
+            // TODO: what the fuck the code below is doing here
             let checkPos = pos - 1;
 
             checkBlockQuote: while (checkPos > sourceStart) {
@@ -381,7 +402,6 @@ export const parse = (
             const start = pos;
 
             pos++;
-
             let blockQuoteContent: string = '';
 
             let lastBlockQuoteStart: number = pos;
@@ -391,6 +411,7 @@ export const parse = (
                     if (source[pos] === '\r') {
                         pos++;
                     }
+
                     pos++;
 
                     const blockQuoteEnd = pos;
@@ -402,8 +423,8 @@ export const parse = (
                     );
 
                     while (pos < sourceEnd) {
-                        let blockQuoteChar = source[pos];
-
+                        const blockQuoteChar = source[pos];
+                        // TODO: new pattern
                         if (blockQuoteChar === '>') {
                             pos++;
 
@@ -465,10 +486,11 @@ export const parse = (
  * @param {number} start start position of part of `source` to be parsed.
  * @param {number} end end position of part of `source` to be parsed.
  *
+ *
  * @returns {ASTInlineNode[]} Array with `ASTInlineNode`\`s.
  *
  */
-const parseInline = (
+export const parseInline = (
     source: string,
     start: number,
     end: number,
@@ -512,7 +534,6 @@ const parseInline = (
 
                         value: source.slice(lastTextStart, start),
                     };
-
                     inlineNode[inlineNode.length] = {
                         type: 'BoldItalic',
 
@@ -546,6 +567,7 @@ const parseInline = (
 
                     inlineNode[inlineNode.length] = {
                         type: 'Bold',
+
                         children: parseInline(source, boldStart, pos),
                     };
 
@@ -615,6 +637,7 @@ const parseInline = (
         }
 
         // fallback
+
         pos++;
     }
 
@@ -628,3 +651,18 @@ const parseInline = (
 
     return inlineNode;
 };
+
+/*
+- abc 
+  - abc
+    - abc
+  - abc 
+
+
+
+
+
+
+
+
+*/
