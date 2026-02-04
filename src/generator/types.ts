@@ -41,3 +41,10 @@ export type MarkdownCSSClasses = Partial<{
     bold: string;
     italic: string;
 }>;
+
+/**
+ * Type of `codeHiglighter` parameter in `generate` function.
+ * The function `CodeHiglighter` should return completed string with HTML.
+ */
+
+export type CodeHighlighter = (source: string, language?: string) => string;

@@ -13,7 +13,6 @@ type Heading = ASTBlockBase<'Heading'> & {
     children: ASTInlineNode[];
 };
 
-// TODO: add docs for ListItem
 export type List = ASTBlockBase<'List'> & { items: ListItem[] };
 /**
  * Type of item in `List['items']`
@@ -37,7 +36,7 @@ export type ListItem = ASTBlockBase<'ListItem'> & {
 type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
     language: string;
 
-    value: string;
+    source: string;
 };
 
 type BlockQuote = ASTBlockBase<'BlockQuote'> & {

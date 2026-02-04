@@ -261,7 +261,7 @@ export const parse = (
 
                 language,
 
-                value: source.slice(codeStart, codeEnd),
+                source: source.slice(codeStart, codeEnd),
             };
 
             lastParagraphStart = pos;

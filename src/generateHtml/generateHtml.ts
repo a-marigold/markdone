@@ -1,4 +1,4 @@
-import type { MarkdownCSSClasses } from '../generator/types';
+import type { MarkdownCSSClasses, CodeHighlighter } from '../generator/types';
 
 import { parse } from '../parser';
 import { generate } from '../generator';
@@ -9,11 +9,12 @@ import { generate } from '../generator';
  * @param {string} source String with MarkDown.
  * @param {MarkdownCSSClasses | undefined} cssClasses Object with CSS classes for MarkDown HTML elements.
  *
- *  @returns {string} Generated HTML from provided markdown string.
+ * @returns {string} Generated HTML from provided markdown string.
  *
  *
  *
  * @example
+ *
  * ```typescript
  * generateHtml('### heading 3 **bold**', { heading: 'heading-classname', bold: 'bold-class' });
  * ```
@@ -25,6 +26,7 @@ import { generate } from '../generator';
  * ```
  *
  * @example
+ *
  * ```typescript
  * const markdownContainer = document.querySelector('.markdown-container');
  *
@@ -32,10 +34,24 @@ import { generate } from '../generator';
  * input.addEventListener('input', (event) => {
  *   markdownContainer.setHTMLUnsafe(generateHTMl(event.target.value, {}));
  * })
+ * ```
+ *
+ *
+ *
  */
+
 export const generateHtml = (
     source: string,
+
     cssClasses?: MarkdownCSSClasses,
+
+    codeHighlighter?: CodeHighlighter,
 ): string => {
-    return generate(parse(source, 0, source.length).body, cssClasses || {});
+    return generate(
+        parse(source, 0, source.length).body,
+
+        cssClasses || {},
+
+        codeHighlighter,
+    );
 };
