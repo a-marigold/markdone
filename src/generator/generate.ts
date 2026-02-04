@@ -1,4 +1,4 @@
-import type { AST, ASTInlineNode } from '../parser';
+import type { AST, ASTInlineNode, List } from '../parser';
 
 import type { MarkdownCSSClasses } from './types';
 
@@ -6,9 +6,9 @@ import type { MarkdownCSSClasses } from './types';
  * #### Generates HTML from provided `AST` with markdown nodes
  *
  *
- * @param {AST['body']} ASTBody Abstract Syntax Tree body (`AST['body']`) with markdown nodes
+ * @param {AST['body']} astBody Abstract Syntax Tree body (`AST['body']`) with markdown nodes
  *
- * @param {MarkdownCSSClasses} cssClasses object with CSS classes for markdown nodes
+ * @param {MarkdownCSSClasses} cssClasses Object with CSS classes for markdown nodes
  *
  *
  *
@@ -29,17 +29,18 @@ import type { MarkdownCSSClasses } from './types';
  */
 
 export const generate = (
-    ASTBody: AST['body'],
+    astBody: AST['body'],
+
     cssClasses: MarkdownCSSClasses,
 ): string => {
     let generated = '';
 
-    const bodyLength = ASTBody.length;
+    const bodyLength = astBody.length;
 
-    let pos = 0;
+    let bodyPos = 0;
 
-    while (pos < bodyLength) {
-        const currentNode = ASTBody[pos];
+    while (bodyPos < bodyLength) {
+        const currentNode = astBody[bodyPos];
 
         if (currentNode.type === 'Paragraph') {
             generated +=
@@ -49,7 +50,7 @@ export const generate = (
                 generateInline(currentNode.children, cssClasses) +
                 '</p>';
 
-            pos++;
+            bodyPos++;
 
             continue;
         }
@@ -66,7 +67,7 @@ export const generate = (
                 currentNode.level +
                 '>';
 
-            pos++;
+            bodyPos++;
 
             continue;
         }
@@ -81,41 +82,15 @@ export const generate = (
                 currentNode.value +
                 '</code></pre>';
 
-            pos++;
+            bodyPos++;
 
             continue;
         }
 
         if (currentNode.type === 'List') {
-            generated += '<ul class="' + cssClasses.unorderedList + '">';
+            generated += generateUnorderedList(currentNode.items, cssClasses);
 
-            /**
-             *
-             * Used for better performance, because reading of `cssClasses` object in items loop is heavy operation
-             */
-
-            const openedLi = '<li class="' + cssClasses.listItem + '">';
-
-            const closedLi = '</li>';
-
-            const items = currentNode.items;
-
-            const itemsLength = items.length;
-
-            let itemIndex = 0;
-
-            while (itemIndex < itemsLength) {
-                generated +=
-                    openedLi +
-                    generate(items[itemIndex].children, cssClasses) +
-                    closedLi;
-
-                itemIndex++;
-            }
-
-            generated += '</ul>';
-
-            pos++;
+            bodyPos++;
 
             continue;
         }
@@ -128,13 +103,14 @@ export const generate = (
                 generate(currentNode.children, cssClasses) +
                 '</blockquote>';
 
-            pos++;
+            bodyPos++;
 
             continue;
         }
 
         // fallback
-        pos++;
+
+        bodyPos++;
     }
 
     return generated;
@@ -218,8 +194,58 @@ const generateInline = (
         }
 
         // fallback
+
         pos++;
     }
+
+    return generated;
+};
+
+/**
+ *
+ * #### Generates HTML with `<ul>...</ul>` from `List['items']` AST Node.
+ *
+ * @param rootItems Entrypoint with `List['items']`.
+ * @param cssClasses Object with classes of markdown HTML nodes.
+ *
+ *
+ * @returns {string} String with `<ul>...</ul>` html struct.
+ *
+ *
+ *
+ *
+ *
+ *
+ */
+const generateUnorderedList = (
+    rootItems: List['items'],
+    cssClasses: MarkdownCSSClasses,
+): string => {
+    let generated: string = '<ul class="' + cssClasses.unorderedList + '">';
+
+    /**
+     * Used for better performance because reading `cssClasses` object in items loop is heavy operation
+     */
+    const openedLi = '<li class="' + cssClasses.listItem + '">';
+    const closedLi = '</li>';
+
+    const listLength = rootItems.length;
+
+    let itemIndex = 0;
+    while (itemIndex < listLength) {
+        const currentItems = rootItems[itemIndex].items;
+
+        generated +=
+            openedLi +
+            generate(rootItems[itemIndex].children, cssClasses) +
+            (currentItems.length
+                ? generateUnorderedList(currentItems, cssClasses)
+                : '') +
+            closedLi;
+        itemIndex++;
+    }
+
+    generated += '</ul>';
 
     return generated;
 };

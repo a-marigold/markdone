@@ -37,5 +37,5 @@ export const generateHtml = (
     source: string,
     cssClasses?: MarkdownCSSClasses,
 ): string => {
-    return generate(parse(source, 0, source.length).body, cssClasses ?? {});
+    return generate(parse(source, 0, source.length).body, cssClasses || {});
 };
