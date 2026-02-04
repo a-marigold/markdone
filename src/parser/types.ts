@@ -13,9 +13,24 @@ type Heading = ASTBlockBase<'Heading'> & {
     children: ASTInlineNode[];
 };
 
+// TODO: add docs for ListItem
 export type List = ASTBlockBase<'List'> & { items: ListItem[] };
-type ListItem = ASTBlockBase<'ListItem'> & {
+/**
+ * Type of item in `List['items']`
+ */
+export type ListItem = ASTBlockBase<'ListItem'> & {
+    /**
+     * `children` property means an array with content of `ListItem`.
+     * @example
+     * ```markdown
+     * - abc - THIS 'abc' WILL BE IN `children`
+     *   - nested - THIS ITEM '- nested' WILL BE IN `items`
+     * ```
+     */
     children: AST['body'];
+    /**
+     * `items` property means an array with nested items to `ListItem`
+     */
     items: List['items'];
 };
 
