@@ -1,19 +1,22 @@
 import type { AST, ASTInlineNode, List } from '../parser';
 
-import type { MarkdownCSSClasses } from './types';
+import type { MarkdownCSSClasses, CodeHighlighter } from './types';
 
 /**
- * #### Generates HTML from provided `AST` with markdown nodes
+ * #### Generates HTML from provided `AST` with markdown nodes.
  *
  *
- * @param {AST['body']} astBody Abstract Syntax Tree body (`AST['body']`) with markdown nodes
+ * @param {AST['body']} astBody Abstract Syntax Tree body (`AST['body']`) with markdown nodes.
  *
- * @param {MarkdownCSSClasses} cssClasses Object with CSS classes for markdown nodes
- *
- *
+ * @param {MarkdownCSSClasses} cssClasses Object with CSS classes for markdown nodes.
  *
  *
- * @returns {string} Generated HTML
+ *
+ *
+ * @param {CodeHighlighter} codeHighlighter Function that receives `source` (string with source code) and `language?` (string with specified language). Should return completed string with HTML.
+ *
+ *
+ * @returns {string} String with generated HTML
  *
  * @example
  * ```typescript
@@ -32,6 +35,8 @@ export const generate = (
     astBody: AST['body'],
 
     cssClasses: MarkdownCSSClasses,
+
+    codeHighlighter?: CodeHighlighter,
 ): string => {
     let generated = '';
 
@@ -79,7 +84,9 @@ export const generate = (
                 '"><code class="' +
                 cssClasses.fencedCodeBlockCode +
                 '">' +
-                currentNode.value +
+                (codeHighlighter
+                    ? codeHighlighter(currentNode.source, currentNode.language)
+                    : currentNode.source) +
                 '</code></pre>';
 
             bodyPos++;
@@ -116,7 +123,23 @@ export const generate = (
     return generated;
 };
 
-const generateInline = (
+/**
+ *
+ * #### Generates markdown `Emphasis` like `Bold`, `Italic` and `InlineCode`.
+ *
+ * @param inlineNodes Array with `ASTInlineNode`.
+ * @param cssClasses Object with classes for HTML nodes.
+ *
+ * @returns {string} String with generated HTML.
+ *
+ * @example
+ *
+ * ```typescript
+ *
+ * ```
+ *
+ */
+export const generateInline = (
     inlineNodes: ASTInlineNode[],
 
     cssClasses: MarkdownCSSClasses,
@@ -217,7 +240,7 @@ const generateInline = (
  *
  *
  */
-const generateUnorderedList = (
+export const generateUnorderedList = (
     rootItems: List['items'],
     cssClasses: MarkdownCSSClasses,
 ): string => {
