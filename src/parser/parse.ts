@@ -2,7 +2,6 @@ import type { AST, ASTInlineNode, List, ListItem, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
 import { checkHasContent, checkStartOfLine } from './utils';
-import { __parserLog__ } from '../__tests__/utils';
 
 /**
  *
@@ -81,7 +80,7 @@ export const parse = (
     let lastParagraphStart: number = sourceStart;
 
     let pos: number = sourceStart;
-    console.log('__THE START__');
+
     main: while (pos < sourceEnd) {
         const char = source[pos];
 
@@ -332,7 +331,6 @@ export const parse = (
                         source[pos] !== '+') ||
                     source[pos + 1] !== ' '
                 ) {
-                    console.log('BREAK');
                     break list;
                 }
 
@@ -359,6 +357,7 @@ export const parse = (
                         source,
 
                         lastParagraphStart,
+
                         paragraphEnd,
                     ),
                 };
@@ -376,32 +375,10 @@ export const parse = (
         }
 
         if (char === '>' && checkStartOfLine(source, sourceStart, pos - 1)) {
-            // TODO: what the fuck the code below is doing here
-            let checkPos = pos - 1;
-
-            checkBlockQuote: while (checkPos > sourceStart) {
-                const checkChar = source[checkPos];
-
-                if (
-                    checkChar !== ' ' &&
-                    checkChar !== '\t' &&
-                    checkChar !== '\n' &&
-                    checkChar !== '\r'
-                ) {
-                    pos++;
-
-                    continue main;
-                }
-
-                if (checkChar === '\n' || checkPos === sourceStart) {
-                    break checkBlockQuote;
-                }
-                checkPos--;
-            }
-
             const start = pos;
 
             pos++;
+
             let blockQuoteContent: string = '';
 
             let lastBlockQuoteStart: number = pos;
@@ -422,25 +399,21 @@ export const parse = (
                         blockQuoteEnd,
                     );
 
-                    while (pos < sourceEnd) {
-                        const blockQuoteChar = source[pos];
-                        // TODO: new pattern
-                        if (blockQuoteChar === '>') {
-                            pos++;
-
-                            lastBlockQuoteStart = pos;
-
-                            continue blockQuote;
-                        }
-
-                        if (
-                            blockQuoteChar !== ' ' &&
-                            blockQuoteContent !== '\t'
-                        ) {
-                            break blockQuote;
-                        }
-
+                    while (
+                        pos < sourceEnd &&
+                        (source[pos] === ' ' || source[pos] === '\t')
+                    ) {
                         pos++;
+                    }
+
+                    if (source[pos] === '>') {
+                        pos++;
+
+                        lastBlockQuoteStart = pos;
+
+                        continue blockQuote;
+                    } else {
+                        break blockQuote;
                     }
                 }
 
@@ -651,18 +624,3 @@ export const parseInline = (
 
     return inlineNode;
 };
-
-/*
-- abc 
-  - abc
-    - abc
-  - abc 
-
-
-
-
-
-
-
-
-*/
