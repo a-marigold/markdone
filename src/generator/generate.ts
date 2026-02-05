@@ -29,6 +29,7 @@ import type { MarkdownCSSClasses, CodeHighlighter } from './types';
  * ```
  *
  *
+ *
  */
 
 export const generate = (
@@ -125,18 +126,41 @@ export const generate = (
 
 /**
  *
+ *
  * #### Generates markdown `Emphasis` like `Bold`, `Italic` and `InlineCode`.
  *
+ *
  * @param inlineNodes Array with `ASTInlineNode`.
+ *
  * @param cssClasses Object with classes for HTML nodes.
  *
  * @returns {string} String with generated HTML.
  *
  * @example
  *
- * ```typescript
  *
+ *
+ * ```typescript
+ * const inlineNodes = parseInline('**`cde`**');
+ *
+ * generateInline(inlineNodes, { bold: 'bold-class', inlineCode: 'code' });
  * ```
+ *
+ *
+ * Output:
+ *
+ * ```html
+ * <strong class="bold-class">
+ *   <code class="code">cde</code>
+ * </strong>
+ * ```
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  *
  */
 export const generateInline = (
@@ -148,15 +172,15 @@ export const generateInline = (
 
     const nodesLength = inlineNodes.length;
 
-    let pos = 0;
+    let nodePos = 0;
 
-    while (pos < nodesLength) {
-        const currentNode = inlineNodes[pos];
+    while (nodePos < nodesLength) {
+        const currentNode = inlineNodes[nodePos];
 
         if (currentNode.type === 'Text') {
             generated += currentNode.value;
 
-            pos++;
+            nodePos++;
 
             continue;
         }
@@ -169,7 +193,7 @@ export const generateInline = (
                 generateInline(currentNode.children, cssClasses) +
                 '</strong>';
 
-            pos++;
+            nodePos++;
 
             continue;
         }
@@ -182,7 +206,7 @@ export const generateInline = (
                 generateInline(currentNode.children, cssClasses) +
                 '</em>';
 
-            pos++;
+            nodePos++;
 
             continue;
         }
@@ -198,7 +222,7 @@ export const generateInline = (
                 generateInline(currentNode.children, cssClasses) +
                 '</strong></em>';
 
-            pos++;
+            nodePos++;
 
             continue;
         }
@@ -211,14 +235,42 @@ export const generateInline = (
                 currentNode.value +
                 '</code>';
 
-            pos++;
+            nodePos++;
+
+            continue;
+        }
+
+        if (currentNode.type === 'Link') {
+            generated +=
+                '<a href="' +
+                currentNode.url +
+                '" class="' +
+                cssClasses.link +
+                '">' +
+                generateInline(currentNode.children, cssClasses) +
+                '</a>';
+
+            nodePos++;
+
+            continue;
+        }
+
+        if (currentNode.type === 'Image') {
+            generated +=
+                '<img src="' +
+                currentNode.url +
+                '" class="' +
+                cssClasses.image +
+                '"/>';
+
+            nodePos++;
 
             continue;
         }
 
         // fallback
 
-        pos++;
+        nodePos++;
     }
 
     return generated;
@@ -265,6 +317,7 @@ export const generateUnorderedList = (
                 ? generateUnorderedList(currentItems, cssClasses)
                 : '') +
             closedLi;
+
         itemIndex++;
     }
 

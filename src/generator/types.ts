@@ -16,18 +16,23 @@ export type MarkdownCSSClasses = Partial<{
     paragraph: string;
 
     /**
+     *
      * Classname of `<code>` (Inline code).
+     *
      *
      * Syntax in markdown - \`some inline code\`
      */
     inlineCode: string;
 
     /**
+     *
      * Classname of `<pre>` in `FencedCodeBlock`
      */
+
     fencedCodeBlockPre: string;
 
     /**
+     *
      * Classname of '<code>' in `FencedCodeBlock`
      */
     fencedCodeBlockCode: string;
@@ -39,7 +44,12 @@ export type MarkdownCSSClasses = Partial<{
     listItem: string;
 
     bold: string;
+
     italic: string;
+
+    link: string;
+
+    image: string;
 }>;
 
 /**
