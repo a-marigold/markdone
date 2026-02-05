@@ -61,7 +61,14 @@ export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 // Inline
 
-export type ASTInlineNode = Text | Bold | Italic | BoldItalic | InlineCode;
+export type ASTInlineNode =
+    | Text
+    | Bold
+    | Italic
+    | BoldItalic
+    | InlineCode
+    | Link
+    | Image;
 
 type Text = ASTInlineNodeBase<'Text'> & { value: string };
 
@@ -74,17 +81,24 @@ type BoldItalic = ASTInlineNodeBase<'BoldItalic'> & {
 };
 type InlineCode = ASTInlineNodeBase<'InlineCode'> & { value: string };
 
+type Link = ASTInlineNodeBase<'Link'> & { altText: string; url: string };
+
+type Image = ASTInlineNodeBase<'Image'> & { altText: string; url: string };
+
 type ASTInlineNodeType =
     | 'Text'
     | 'Bold'
     | 'Italic'
     | 'BoldItalic'
-    | 'InlineCode';
+    | 'InlineCode'
+    | 'Link'
+    | 'Image';
 
 /**
  * The basic type of `ASTInlineNode`.
  *
- * `T` - `ASTInlineNodeType` (Text, Bold, Italic)
- * `V` - Node content. That can be nested `ASTInlineNode` or just `string`
+ * `T` - `ASTInlineNodeType` (Text, Bold, Italic).
+ *
+ * `V` - Node content. That can be nested `ASTInlineNode` or just `string`.
  */
 type ASTInlineNodeBase<T extends ASTInlineNodeType> = { type: T };

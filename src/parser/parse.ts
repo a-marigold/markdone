@@ -441,7 +441,7 @@ export const parse = (
         pos++;
     }
 
-    if (lastParagraphStart < sourceEnd) {
+    if (lastParagraphStart <= sourceEnd) {
         body[body.length] = {
             type: 'Paragraph',
 
@@ -609,12 +609,63 @@ export const parseInline = (
             continue;
         }
 
+        if (char === '[') {
+            const textEnd = pos;
+
+            let isImage = false;
+            if (source[pos - 1] === '!') {
+                isImage = true;
+            }
+
+            pos++;
+            const altStart = pos;
+            while (pos < end && source[pos] !== ']') {
+                pos++;
+            }
+            if (source[pos + 1] !== '(') {
+                break;
+            }
+
+            const altText = source.slice(altStart, pos);
+
+            pos += 2;
+
+            const urlStart = pos;
+
+            while (pos < end && source[pos] !== ')') {
+                pos++;
+            }
+
+            if (pos === end) {
+                break;
+            }
+
+            const url = source.slice(urlStart, pos);
+
+            inlineNode[inlineNode.length] = {
+                type: 'Text',
+                value: source.slice(lastTextStart, textEnd),
+            };
+
+            inlineNode[inlineNode.length] = {
+                type: isImage ? 'Image' : 'Link',
+                altText,
+                url,
+            };
+
+            pos++;
+
+            lastTextStart = pos;
+
+            continue;
+        }
+
         // fallback
 
-        pos++;
+        pos++; // t
     }
 
-    if (lastTextStart < end) {
+    if (lastTextStart <= end) {
         inlineNode[inlineNode.length] = {
             type: 'Text',
 
