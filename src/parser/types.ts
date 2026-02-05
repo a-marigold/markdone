@@ -54,6 +54,9 @@ type ASTBlockType =
 /**
  *
  * The basic type of AST
+ *
+ *
+ *
  */
 type ASTBlockBase<T extends ASTBlockType> = { type: T };
 
@@ -81,7 +84,11 @@ type BoldItalic = ASTInlineNodeBase<'BoldItalic'> & {
 };
 type InlineCode = ASTInlineNodeBase<'InlineCode'> & { value: string };
 
-type Link = ASTInlineNodeBase<'Link'> & { altText: string; url: string };
+type Link = ASTInlineNodeBase<'Link'> & {
+    children: ASTInlineNode[];
+
+    url: string;
+};
 
 type Image = ASTInlineNodeBase<'Image'> & { altText: string; url: string };
 

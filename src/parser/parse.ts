@@ -610,15 +610,17 @@ export const parseInline = (
         }
 
         if (char === '[') {
-            const textEnd = pos;
+            let textEnd = pos;
 
             let isImage = false;
             if (source[pos - 1] === '!') {
                 isImage = true;
+
+                textEnd--;
             }
 
             pos++;
-            const altStart = pos;
+            const contentStart = pos;
             while (pos < end && source[pos] !== ']') {
                 pos++;
             }
@@ -626,7 +628,7 @@ export const parseInline = (
                 break;
             }
 
-            const altText = source.slice(altStart, pos);
+            const contentEnd = pos;
 
             pos += 2;
 
@@ -647,11 +649,19 @@ export const parseInline = (
                 value: source.slice(lastTextStart, textEnd),
             };
 
-            inlineNode[inlineNode.length] = {
-                type: isImage ? 'Image' : 'Link',
-                altText,
-                url,
-            };
+            if (isImage) {
+                inlineNode[inlineNode.length] = {
+                    type: 'Image',
+                    altText: source.slice(contentStart, contentEnd),
+                    url,
+                };
+            } else {
+                inlineNode[inlineNode.length] = {
+                    type: 'Link',
+                    children: parseInline(source, contentStart, contentEnd),
+                    url,
+                };
+            }
 
             pos++;
 
