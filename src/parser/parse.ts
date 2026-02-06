@@ -122,6 +122,7 @@ export const parse = (
 
                         children: parseInline(
                             source,
+
                             lastParagraphStart,
 
                             newParagraphEnd,
@@ -206,19 +207,24 @@ export const parse = (
 
             pos += 3;
 
-            const codeStart = pos;
+            const languageStart = pos;
 
             while (
                 pos < sourceEnd &&
-                source[pos] !== ' ' &&
-                source[pos] !== '\t' &&
                 source[pos] !== '\n' &&
                 source[pos] !== '\r'
             ) {
                 pos++;
             }
 
-            const language = source.slice(codeStart, pos);
+            const language = source.slice(languageStart, pos);
+
+            if (source[pos] === '\r') {
+                pos++;
+            }
+            pos++;
+
+            const codeStart = pos;
 
             fencedCodeBlock: while (pos < sourceEnd) {
                 if (
@@ -250,9 +256,7 @@ export const parse = (
                     ),
                 };
             }
-            /*
 
-            */
             body[body.length] = {
                 type: 'FencedCodeBlock',
 
