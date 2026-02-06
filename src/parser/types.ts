@@ -17,16 +17,25 @@ export type List = ASTBlockBase<'List'> & { items: ListItem[] };
 /**
  * Type of item in `List['items']`
  */
-export type ListItem = ASTBlockBase<'ListItem'> & {
+export type ListItem = {
+    type: 'ListItem';
+
     /**
+     *
      * `children` property means an array with content of `ListItem`.
+     *
      * @example
+     *
+     *
      * ```markdown
      * - abc - THIS 'abc' WILL BE IN `children`
      *   - nested - THIS ITEM '- nested' WILL BE IN `items`
      * ```
+     *
      */
+
     children: AST['body'];
+
     /**
      * `items` property means an array with nested items to `ListItem`
      */
@@ -43,11 +52,10 @@ type BlockQuote = ASTBlockBase<'BlockQuote'> & {
     children: AST['body'];
 };
 
-type ASTBlockType =
+export type ASTBlockType =
     | 'Paragraph'
     | 'Heading'
     | 'List'
-    | 'ListItem'
     | 'FencedCodeBlock'
     | 'BlockQuote';
 
@@ -92,7 +100,7 @@ type Link = ASTInlineNodeBase<'Link'> & {
 
 type Image = ASTInlineNodeBase<'Image'> & { altText: string; url: string };
 
-type ASTInlineNodeType =
+export type ASTInlineNodeType =
     | 'Text'
     | 'Bold'
     | 'Italic'
