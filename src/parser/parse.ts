@@ -1,7 +1,7 @@
 import type { AST, ASTInlineNode, List, ListItem, HeadingLevel } from './types';
 import { MAX_HEADING_LEVEL } from './constants';
 
-import { checkHasContent, checkStartOfLine } from './utils';
+import { checkHasContent, checkHasText, checkStartOfLine } from './utils';
 
 /**
  *
@@ -51,6 +51,8 @@ export const parse = (
     const body = AST.body;
 
     /**
+     *
+     *
      * Last position of `Paragraph` start.
      *
      *
@@ -111,7 +113,6 @@ export const parse = (
 
                 pos++;
             }
-
             if (newLineCount > 1) {
                 if (
                     checkHasContent(source, lastParagraphStart, newParagraphEnd)
@@ -140,11 +141,7 @@ export const parse = (
 
             let level = 1;
 
-            while (
-                pos < sourceEnd &&
-                source[pos] === '#' &&
-                source[pos] !== ' '
-            ) {
+            while (pos < sourceEnd && source[pos] === '#') {
                 level++;
 
                 pos++;
@@ -297,6 +294,7 @@ export const parse = (
                     children: parse(source, itemContentStart, pos).body,
                     items: [],
                 };
+
                 const currentLevel = listStack[listStack.length - 1];
 
                 const currentLevelItems = currentLevel.items;
@@ -441,7 +439,10 @@ export const parse = (
         pos++;
     }
 
-    if (lastParagraphStart <= sourceEnd) {
+    if (
+        lastParagraphStart <= sourceEnd &&
+        checkHasContent(source, lastParagraphStart, sourceEnd)
+    ) {
         body[body.length] = {
             type: 'Paragraph',
 
@@ -502,11 +503,13 @@ export const parseInline = (
                 if (pos === end) {
                     pos = boldItalicStart;
                 } else {
-                    inlineNode[inlineNode.length] = {
-                        type: 'Text',
+                    if (checkHasText(source, lastTextStart, start)) {
+                        inlineNode[inlineNode.length] = {
+                            type: 'Text',
 
-                        value: source.slice(lastTextStart, start),
-                    };
+                            value: source.slice(lastTextStart, start),
+                        };
+                    }
                     inlineNode[inlineNode.length] = {
                         type: 'BoldItalic',
 
@@ -532,12 +535,13 @@ export const parseInline = (
                 if (pos === end) {
                     pos = boldStart;
                 } else {
-                    inlineNode[inlineNode.length] = {
-                        type: 'Text',
+                    if (checkHasText(source, lastTextStart, start)) {
+                        inlineNode[inlineNode.length] = {
+                            type: 'Text',
 
-                        value: source.slice(lastTextStart, start),
-                    };
-
+                            value: source.slice(lastTextStart, start),
+                        };
+                    }
                     inlineNode[inlineNode.length] = {
                         type: 'Bold',
 
@@ -557,11 +561,13 @@ export const parseInline = (
                 if (pos === end) {
                     pos = italicStart;
                 } else {
-                    inlineNode[inlineNode.length] = {
-                        type: 'Text',
+                    if (checkHasText(source, lastTextStart, start)) {
+                        inlineNode[inlineNode.length] = {
+                            type: 'Text',
 
-                        value: source.slice(lastTextStart, start),
-                    };
+                            value: source.slice(lastTextStart, start),
+                        };
+                    }
 
                     inlineNode[inlineNode.length] = {
                         type: 'Italic',
@@ -591,10 +597,12 @@ export const parseInline = (
             if (pos === end) {
                 pos = codeStart;
             } else {
-                inlineNode[inlineNode.length] = {
-                    type: 'Text',
-                    value: source.slice(lastTextStart, start),
-                };
+                if (checkHasText(source, lastTextStart, start)) {
+                    inlineNode[inlineNode.length] = {
+                        type: 'Text',
+                        value: source.slice(lastTextStart, start),
+                    };
+                }
 
                 inlineNode[inlineNode.length] = {
                     type: 'InlineCode',
@@ -620,12 +628,15 @@ export const parseInline = (
             }
 
             pos++;
+
             const contentStart = pos;
             while (pos < end && source[pos] !== ']') {
                 pos++;
             }
             if (source[pos + 1] !== '(') {
-                break;
+                pos = textEnd;
+
+                continue;
             }
 
             const contentEnd = pos;
@@ -639,15 +650,19 @@ export const parseInline = (
             }
 
             if (pos === end) {
-                break;
+                pos = textEnd;
+
+                continue;
             }
 
             const url = source.slice(urlStart, pos);
 
-            inlineNode[inlineNode.length] = {
-                type: 'Text',
-                value: source.slice(lastTextStart, textEnd),
-            };
+            if (checkHasText(source, lastTextStart, textEnd)) {
+                inlineNode[inlineNode.length] = {
+                    type: 'Text',
+                    value: source.slice(lastTextStart, textEnd),
+                };
+            }
 
             if (isImage) {
                 inlineNode[inlineNode.length] = {
@@ -675,7 +690,7 @@ export const parseInline = (
         pos++; // t
     }
 
-    if (lastTextStart <= end) {
+    if (lastTextStart <= end && checkHasText(source, lastTextStart, end)) {
         inlineNode[inlineNode.length] = {
             type: 'Text',
 
