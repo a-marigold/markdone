@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'bun:test';
 
-import { checkHasContent, checkStartOfLine } from '../../parser/utils';
+import {
+    checkHasContent,
+    checkStartOfLine,
+    checkHasText,
+} from '../../parser/utils';
 
 describe('checkHasContent', () => {
     it('should work only with place from received `start` to `end` arguments', () => {
@@ -50,9 +54,33 @@ describe('checkNewLine', () => {
 
     it('should node handle part of `source` that is less than `minPos` argument', () => {
         const source = 'start text';
+
         const minPos = 5;
         const pos = 5;
 
         expect(checkStartOfLine(source, minPos, pos)).toBe(true);
+    });
+});
+
+describe('checkHasText', () => {
+    it('should work only with part of `source` that is from start to end', () => {
+        const source = 'a t';
+
+        const start = 1;
+        const end = 2;
+
+        expect(checkHasText(source, start, end)).toBe(false);
+    });
+
+    it('should return `true` if `source` contains non empty characters', () => {
+        const source = '   abc    \t';
+
+        expect(checkHasText(source, 0, source.length)).toBe(true);
+    });
+
+    it('should return `false` if `source` contains only spaces or tabs', () => {
+        const source = '\t\t\t\t\t\t\t\t\t\t        \t\t\t\t\t';
+
+        expect(checkHasText(source, 0, source.length)).toBe;
     });
 });

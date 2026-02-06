@@ -1,13 +1,13 @@
 /**
  * #### Checks the `source` string section from `start` to `end` on containing any symbol except ' ', '\n', '\r' and '\t'.
+ * #### Used in `parse`
  *
  *
+ * @param {string} source String to be checked.
  *
- * @param {string} source source string to be checked.
+ * @param {number} start Start position of part of string that is checking (including).
  *
- * @param {number} start start position of part of string that is checking (including).
- *
- * @param {number} end end position of part of string that is checking (excluding).
+ * @param {number} end End position of part of string that is checking (excluding).
  *
  * @returns {boolean} `true`, if the `source` contains any symbol expect empty symbols. Otherwise returns `false`.
  *
@@ -94,7 +94,9 @@ export const checkHasContent = (
  */
 export const checkStartOfLine = (
     source: string,
+
     minPos: number,
+
     pos: number,
 ): boolean => {
     let checkPos = pos;
@@ -110,4 +112,52 @@ export const checkStartOfLine = (
     }
 
     return true;
+};
+
+/**
+ *
+ * #### Checks `source` on containing character that is not a space or a tab.
+ * #### Used in `parseInline` for identifying empty `Text` nodes.
+ *
+ *
+ * @param source String to be checked.
+ * @param start Start position of `source` form which the check starts from.
+ * @param end End position of `source` (not including).
+ *
+ * @returns {boolean} `true` if `source` contains non empty characters or `false` otherwise.
+ *
+ *
+ *
+ *
+ *
+ * @example
+ * ```typescript
+ * const source = '                       \t\t';
+ *
+ * checkHasText(source, 0, source.length); // This returns `true`
+ *
+ * ```
+ *
+ */
+
+export const checkHasText = (
+    source: string,
+
+    start: number,
+
+    end: number,
+): boolean => {
+    let pos = start;
+
+    while (pos < end) {
+        const char = source[pos];
+
+        if (char !== ' ' && char !== '\t') {
+            return true;
+        }
+
+        pos++;
+    }
+
+    return false;
 };
