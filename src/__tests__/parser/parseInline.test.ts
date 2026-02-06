@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'bun:test';
 
-import pretty from 'pretty';
-
 import { parseInline } from '../../parser/parse';
 import type { ASTInlineNodeType } from '../../parser';
 
@@ -14,6 +12,7 @@ describe('parseInline', () => {
         expect(inlineNodes.length).toBe(1);
         expect(inlineNodes[0]).toEqual({
             type: 'Italic',
+
             children: [{ type: 'Text', value: 'b' }],
         });
     });

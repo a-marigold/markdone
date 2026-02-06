@@ -77,8 +77,8 @@ export const parse = (
      *
      *
      *
+     *
      */
-
     let lastParagraphStart: number = sourceStart;
 
     let pos: number = sourceStart;
@@ -288,7 +288,11 @@ export const parse = (
             list: while (pos < sourceEnd) {
                 const itemContentStart = pos;
 
-                while (source[pos] !== '\n' && source[pos] !== '\r') {
+                while (
+                    pos < sourceEnd &&
+                    source[pos] !== '\n' &&
+                    source[pos] !== '\r'
+                ) {
                     pos++;
                 }
 
@@ -324,6 +328,7 @@ export const parse = (
                     } else if (source[pos] === '\t') {
                         newLineIndent += 2;
                     }
+
                     pos++;
                 }
 

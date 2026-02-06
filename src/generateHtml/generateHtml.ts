@@ -25,6 +25,7 @@ import { generate } from '../generator';
  * <h3 class="heading-classname">heading 3 <strong class="bold-class">bold</strong>
  * ```
  *
+ *
  * @example
  *
  * ```typescript
@@ -35,6 +36,7 @@ import { generate } from '../generator';
  *   markdownContainer.setHTMLUnsafe(generateHTMl(event.target.value, {}));
  * })
  * ```
+ *
  *
  *
  *
