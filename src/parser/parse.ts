@@ -1,4 +1,12 @@
-import type { AST, ASTInlineNode, List, ListItem, HeadingLevel } from './types';
+import type {
+    AST,
+    ASTInlineNode,
+    UnorderedList,
+    UnorderedListItem,
+    OrderedList,
+    HeadingLevel,
+} from './types';
+
 import { MAX_HEADING_LEVEL } from './constants';
 
 import { checkHasContent, checkHasText, checkStartOfLine } from './utils';
@@ -43,6 +51,8 @@ export const parse = (
 
     /**
      * The `body` of the `AST`
+     *
+     *
      *
      *
      *
@@ -277,11 +287,12 @@ export const parse = (
         ) {
             const paragraphEnd = pos;
 
-            const rootItems: List['items'] = [];
+            const rootItems: UnorderedList['items'] = [];
 
-            const listStack: { indent: number; items: List['items'] }[] = [
-                { indent: 0, items: rootItems },
-            ];
+            const listStack: {
+                indent: number;
+                items: UnorderedList['items'];
+            }[] = [{ indent: 0, items: rootItems }];
 
             pos += 2;
 
@@ -296,10 +307,11 @@ export const parse = (
                     pos++;
                 }
 
-                const newItem: ListItem = {
+                const newItem: UnorderedListItem = {
                     type: 'ListItem',
 
                     children: parse(source, itemContentStart, pos).body,
+
                     items: [],
                 };
 
@@ -346,6 +358,7 @@ export const parse = (
                 if (newLineIndent - currentLevel.indent > 1) {
                     listStack[listStack.length] = {
                         indent: newLineIndent,
+
                         items: newItem.items,
                     };
                 } else {
@@ -360,6 +373,7 @@ export const parse = (
             if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
                 body[body.length] = {
                     type: 'Paragraph',
+
                     children: parseInline(
                         source,
 
@@ -371,9 +385,135 @@ export const parse = (
             }
 
             body[body.length] = {
-                type: 'List',
+                type: 'UnorderedList',
 
                 items: rootItems,
+            };
+
+            lastParagraphStart = pos;
+
+            continue;
+        }
+
+        if (
+            char >= '0' &&
+            char <= '9' &&
+            checkStartOfLine(source, sourceStart, pos - 1)
+        ) {
+            const paragraphEnd = pos;
+
+            /**
+             *
+             * {@link OrderedList.startNumber}
+             */
+
+            let startNumber: string = '';
+
+            while (source[pos] >= '0' && source[pos] <= '9') {
+                startNumber += source[pos];
+                pos++;
+            }
+            const nextChar = source[pos + 1];
+
+            if (
+                source[pos] !== '.' &&
+                nextChar !== ' ' &&
+                nextChar !== '\t' &&
+                nextChar !== '\n' &&
+                nextChar !== '\r'
+            ) {
+                continue main;
+            }
+
+            pos++;
+
+            const initialIndent = 0;
+
+            const listItems: OrderedList['items'] = [];
+
+            list: while (pos < sourceEnd) {
+                let listItemContent: string = '';
+
+                listItem: while (pos < sourceEnd) {
+                    const contentStart = pos;
+
+                    while (
+                        pos < sourceEnd &&
+                        source[pos] !== '\n' &&
+                        source[pos] !== '\r'
+                    ) {
+                        pos++;
+                    }
+
+                    if (source[pos] === '\r') {
+                        pos++;
+                    }
+
+                    pos++;
+
+                    listItemContent += source.slice(contentStart, pos);
+
+                    let newLineIndent = 0;
+
+                    while (
+                        source[pos] === ' ' ||
+                        source[pos] === '\t' ||
+                        source[pos] === '\n' ||
+                        source[pos] === '\r'
+                    ) {
+                        if (source[pos] === ' ') {
+                            newLineIndent++;
+                        } else if (source[pos] === '\t') {
+                            newLineIndent += 2;
+                        }
+
+                        pos++;
+                    }
+
+                    const deltaIndent = newLineIndent - initialIndent;
+
+                    if (deltaIndent > 2) {
+                        continue listItem;
+                    } else {
+                        while (source[pos] >= '0' && source[pos] <= '9') {
+                            pos++;
+                        }
+
+                        const nextChar = source[pos + 1];
+
+                        if (
+                            source[pos] !== '.' &&
+                            nextChar !== ' ' &&
+                            nextChar !== '\t' &&
+                            nextChar !== '\n' &&
+                            nextChar !== '\r'
+                        ) {
+                            break list;
+                        }
+
+                        pos++;
+
+                        break listItem;
+                    }
+                }
+
+                listItems[listItems.length] = {
+                    type: 'OrderedListItem',
+
+                    children: parse(listItemContent, 0, listItemContent.length)
+                        .body,
+                };
+                listItemContent = '';
+            }
+
+            body[body.length] = {
+                type: 'Paragraph',
+                children: parseInline(source, lastParagraphStart, paragraphEnd),
+            };
+            body[body.length] = {
+                type: 'OrderedList',
+                startNumber,
+                items: listItems,
             };
 
             lastParagraphStart = pos;
@@ -463,6 +603,7 @@ export const parse = (
 };
 
 /**
+ *
  * #### Parses Inline markdown (Emphasis, Text).
  *
  * @param {string} source Source string of line to be parsed.

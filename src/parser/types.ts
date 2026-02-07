@@ -1,8 +1,16 @@
 export type AST = {
-    body: (Paragraph | FencedCodeBlock | Heading | List | BlockQuote)[];
+    body: (
+        | Paragraph
+        | FencedCodeBlock
+        | Heading
+        | UnorderedList
+        | OrderedList
+        | BlockQuote
+    )[];
 };
 
 //
+
 // Blocks
 
 type Paragraph = ASTBlockBase<'Paragraph'> & { children: ASTInlineNode[] };
@@ -13,11 +21,14 @@ type Heading = ASTBlockBase<'Heading'> & {
     children: ASTInlineNode[];
 };
 
-export type List = ASTBlockBase<'List'> & { items: ListItem[] };
+export type UnorderedList = ASTBlockBase<'UnorderedList'> & {
+    items: UnorderedListItem[];
+};
+
 /**
  * Type of item in `List['items']`
  */
-export type ListItem = {
+export type UnorderedListItem = {
     type: 'ListItem';
 
     /**
@@ -25,6 +36,7 @@ export type ListItem = {
      * `children` property means an array with content of `ListItem`.
      *
      * @example
+     *
      *
      *
      * ```markdown
@@ -37,10 +49,40 @@ export type ListItem = {
     children: AST['body'];
 
     /**
+     *
+     *
+     *
+     *
      * `items` property means an array with nested items to `ListItem`
+     *
      */
-    items: List['items'];
+
+    items: UnorderedList['items'];
 };
+
+export type OrderedList = ASTBlockBase<'OrderedList'> & {
+    items: OrderedListItem[];
+    /**
+     *
+     * content of `start` attribute of `ol` HTML element.
+     *
+     * @example
+     * ```html
+     * <ol start=""> <!-- `start` attribute is the `startNumber` -->
+     * </ol>
+     * ```
+     *
+     */
+
+    startNumber: string;
+};
+export type OrderedListItem = {
+    type: 'OrderedListItem';
+
+    children: AST['body'];
+};
+
+// TODO: delete `type` property from Ordered and Unordered Lists
 
 type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
     language: string;
@@ -55,7 +97,8 @@ type BlockQuote = ASTBlockBase<'BlockQuote'> & {
 export type ASTBlockType =
     | 'Paragraph'
     | 'Heading'
-    | 'List'
+    | 'UnorderedList'
+    | 'OrderedList'
     | 'FencedCodeBlock'
     | 'BlockQuote';
 
