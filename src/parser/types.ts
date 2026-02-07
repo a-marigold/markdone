@@ -29,8 +29,6 @@ export type UnorderedList = ASTBlockBase<'UnorderedList'> & {
  * Type of item in `List['items']`
  */
 export type UnorderedListItem = {
-    type: 'ListItem';
-
     /**
      *
      * `children` property means an array with content of `ListItem`.
@@ -76,13 +74,10 @@ export type OrderedList = ASTBlockBase<'OrderedList'> & {
 
     startNumber: string;
 };
-export type OrderedListItem = {
-    type: 'OrderedListItem';
 
+export type OrderedListItem = {
     children: AST['body'];
 };
-
-// TODO: delete `type` property from Ordered and Unordered Lists
 
 type FencedCodeBlock = ASTBlockBase<'FencedCodeBlock'> & {
     language: string;

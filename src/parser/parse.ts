@@ -308,8 +308,6 @@ export const parse = (
                 }
 
                 const newItem: UnorderedListItem = {
-                    type: 'ListItem',
-
                     children: parse(source, itemContentStart, pos).body,
 
                     items: [],
@@ -405,6 +403,7 @@ export const parse = (
             /**
              *
              * {@link OrderedList.startNumber}
+             *
              */
 
             let startNumber: string = '';
@@ -413,6 +412,7 @@ export const parse = (
                 startNumber += source[pos];
                 pos++;
             }
+
             const nextChar = source[pos + 1];
 
             if (
@@ -498,8 +498,6 @@ export const parse = (
                 }
 
                 listItems[listItems.length] = {
-                    type: 'OrderedListItem',
-
                     children: parse(listItemContent, 0, listItemContent.length)
                         .body,
                 };
@@ -515,7 +513,6 @@ export const parse = (
                 startNumber,
                 items: listItems,
             };
-
             lastParagraphStart = pos;
 
             continue;
