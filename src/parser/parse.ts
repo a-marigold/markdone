@@ -117,6 +117,7 @@ export const parse = (
                 if (source[pos] === '\n') {
                     newLineCount++;
                 }
+
                 if (newLineCount === 2) {
                     newParagraphEnd = pos;
                 }
@@ -232,6 +233,7 @@ export const parse = (
             if (source[pos] === '\r') {
                 pos++;
             }
+
             pos++;
 
             const codeStart = pos;
@@ -282,101 +284,82 @@ export const parse = (
 
         if (
             (char === '-' || char === '*' || char === '+') &&
-            source[pos + 1] === ' ' &&
+            (source[pos + 1] === ' ' || source[pos + 1] === '\t') &&
             checkStartOfLine(source, sourceStart, pos - 1)
         ) {
             const paragraphEnd = pos;
 
-            const rootItems: UnorderedList['items'] = [];
+            pos + 2;
 
-            const listStack: {
-                indent: number;
-                items: UnorderedList['items'];
-            }[] = [{ indent: 0, items: rootItems }];
+            const initialIndent = 0;
 
-            pos += 2;
+            const listItems: UnorderedList['items'] = [];
 
             list: while (pos < sourceEnd) {
-                const itemContentStart = pos;
+                let itemContent: string = '';
 
-                while (
-                    pos < sourceEnd &&
-                    source[pos] !== '\n' &&
-                    source[pos] !== '\r'
-                ) {
+                listItem: while (pos < sourceEnd) {
+                    const itemContentStart = pos;
+
+                    while (source[pos] !== '\n' && source[pos] !== '\r') {
+                        pos++;
+                    }
+
+                    if (source[pos] === '\r') {
+                        pos++;
+                    }
+
                     pos++;
+
+                    itemContent += source.slice(itemContentStart, pos);
+
+                    let newLineIndent = 0;
+
+                    while (
+                        source[pos] === ' ' ||
+                        source[pos] === '\t' ||
+                        source[pos] === '\n' ||
+                        source[pos] === '\r'
+                    ) {
+                        if (source[pos] == ' ') {
+                            newLineIndent++;
+                        } else if (source[pos] === '\t') {
+                            newLineIndent += 2;
+                        }
+
+                        pos++;
+                    }
+
+                    if (newLineIndent - initialIndent > 1) {
+                        continue listItem;
+                    } else {
+                        if (
+                            (source[pos] === '-' ||
+                                source[pos] === '*' ||
+                                source[pos] === '+') &&
+                            (source[pos + 1] === ' ' ||
+                                source[pos + 1] === '\t')
+                        ) {
+                            continue list;
+                        } else {
+                            break list;
+                        }
+                    }
                 }
 
-                const newItem: UnorderedListItem = {
-                    children: parse(source, itemContentStart, pos).body,
-
-                    items: [],
+                listItems[listItems.length] = {
+                    children: parse(itemContent, 0, itemContent.length).body,
                 };
 
-                const currentLevel = listStack[listStack.length - 1];
-
-                const currentLevelItems = currentLevel.items;
-
-                currentLevelItems[currentLevelItems.length] = newItem;
-
-                if (source[pos] === '\r') {
-                    pos++;
-                }
-
-                pos++;
-
-                let newLineIndent = 0;
-
-                while (
-                    source[pos] === ' ' ||
-                    source[pos] === '\t' ||
-                    source[pos] === '\n' ||
-                    source[pos] === '\r'
-                ) {
-                    if (source[pos] === ' ') {
-                        newLineIndent++;
-                    } else if (source[pos] === '\t') {
-                        newLineIndent += 2;
-                    }
-
-                    pos++;
-                }
-
-                if (
-                    (source[pos] !== '-' &&
-                        source[pos] !== '*' &&
-                        source[pos] !== '+') ||
-                    source[pos + 1] !== ' '
-                ) {
-                    break list;
-                }
-
-                pos += 2;
-
-                if (newLineIndent - currentLevel.indent > 1) {
-                    listStack[listStack.length] = {
-                        indent: newLineIndent,
-
-                        items: newItem.items,
-                    };
-                } else {
-                    while (
-                        listStack[listStack.length - 1].indent > newLineIndent
-                    ) {
-                        listStack.length--;
-                    }
-                }
+                itemContent = '';
             }
 
             if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
                 body[body.length] = {
                     type: 'Paragraph',
-
                     children: parseInline(
                         source,
-
                         lastParagraphStart,
-
                         paragraphEnd,
                     ),
                 };
@@ -384,8 +367,7 @@ export const parse = (
 
             body[body.length] = {
                 type: 'UnorderedList',
-
-                items: rootItems,
+                items: listItems,
             };
 
             lastParagraphStart = pos;
@@ -432,7 +414,7 @@ export const parse = (
             const listItems: OrderedList['items'] = [];
 
             list: while (pos < sourceEnd) {
-                let listItemContent: string = '';
+                let itemContent: string = '';
 
                 listItem: while (pos < sourceEnd) {
                     const contentStart = pos;
@@ -451,7 +433,7 @@ export const parse = (
 
                     pos++;
 
-                    listItemContent += source.slice(contentStart, pos);
+                    itemContent += source.slice(contentStart, pos);
 
                     let newLineIndent = 0;
 
@@ -470,9 +452,7 @@ export const parse = (
                         pos++;
                     }
 
-                    const deltaIndent = newLineIndent - initialIndent;
-
-                    if (deltaIndent > 2) {
+                    if (newLineIndent - initialIndent > 2) {
                         continue listItem;
                     } else {
                         while (source[pos] >= '0' && source[pos] <= '9') {
@@ -498,16 +478,22 @@ export const parse = (
                 }
 
                 listItems[listItems.length] = {
-                    children: parse(listItemContent, 0, listItemContent.length)
-                        .body,
+                    children: parse(itemContent, 0, itemContent.length).body,
                 };
-                listItemContent = '';
+                itemContent = '';
             }
 
-            body[body.length] = {
-                type: 'Paragraph',
-                children: parseInline(source, lastParagraphStart, paragraphEnd),
-            };
+            if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
+                body[body.length] = {
+                    type: 'Paragraph',
+                    children: parseInline(
+                        source,
+                        lastParagraphStart,
+                        paragraphEnd,
+                    ),
+                };
+            }
+
             body[body.length] = {
                 type: 'OrderedList',
                 startNumber,

@@ -37,30 +37,23 @@ export type UnorderedListItem = {
      *
      *
      *
+     *
      * ```markdown
      * - abc - THIS 'abc' WILL BE IN `children`
      *   - nested - THIS ITEM '- nested' WILL BE IN `items`
      * ```
      *
+     *
+     *
      */
 
     children: AST['body'];
-
-    /**
-     *
-     *
-     *
-     *
-     * `items` property means an array with nested items to `ListItem`
-     *
-     */
-
-    items: UnorderedList['items'];
 };
 
 export type OrderedList = ASTBlockBase<'OrderedList'> & {
     items: OrderedListItem[];
     /**
+     *
      *
      * content of `start` attribute of `ol` HTML element.
      *
@@ -69,6 +62,7 @@ export type OrderedList = ASTBlockBase<'OrderedList'> & {
      * <ol start=""> <!-- `start` attribute is the `startNumber` -->
      * </ol>
      * ```
+     *
      *
      */
 
