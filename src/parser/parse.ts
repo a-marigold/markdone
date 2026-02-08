@@ -2,7 +2,6 @@ import type {
     AST,
     ASTInlineNode,
     UnorderedList,
-    UnorderedListItem,
     OrderedList,
     HeadingLevel,
 } from './types';
@@ -56,6 +55,8 @@ export const parse = (
      *
      *
      *
+     *
+     *
      */
 
     const body = AST.body;
@@ -73,6 +74,7 @@ export const parse = (
      *
      * @example
      *
+     *
      * ```typescripts
      *
      * if(source[pos] === '#') {
@@ -84,6 +86,8 @@ export const parse = (
      *
      * }
      * ```
+     *
+     *
      *
      *
      *
@@ -103,7 +107,7 @@ export const parse = (
 
             pos++;
 
-            let newParagraphEnd: number = lastParagraphStart;
+            let lastParagraphEnd: number = lastParagraphStart;
 
             let newLineCount: number = 1;
 
@@ -119,14 +123,20 @@ export const parse = (
                 }
 
                 if (newLineCount === 2) {
-                    newParagraphEnd = pos;
+                    lastParagraphEnd = pos;
                 }
 
                 pos++;
             }
             if (newLineCount > 1) {
                 if (
-                    checkHasContent(source, lastParagraphStart, newParagraphEnd)
+                    checkHasContent(
+                        source,
+
+                        lastParagraphStart,
+
+                        lastParagraphEnd,
+                    )
                 ) {
                     body[body.length] = {
                         type: 'Paragraph',
@@ -136,7 +146,7 @@ export const parse = (
 
                             lastParagraphStart,
 
-                            newParagraphEnd,
+                            lastParagraphEnd,
                         ),
                     };
                 }
@@ -201,7 +211,6 @@ export const parse = (
 
                     children: parseInline(source, headingStart, headingEnd),
                 };
-
                 lastParagraphStart = pos;
             }
 
@@ -289,7 +298,7 @@ export const parse = (
         ) {
             const paragraphEnd = pos;
 
-            pos + 2;
+            pos += 2;
 
             const initialIndent = 0;
 
@@ -301,30 +310,33 @@ export const parse = (
                 listItem: while (pos < sourceEnd) {
                     const itemContentStart = pos;
 
-                    while (source[pos] !== '\n' && source[pos] !== '\r') {
+                    while (
+                        pos < sourceEnd &&
+                        source[pos] !== '\n' &&
+                        source[pos] !== '\r'
+                    ) {
                         pos++;
                     }
 
                     if (source[pos] === '\r') {
                         pos++;
                     }
-
                     pos++;
 
                     itemContent += source.slice(itemContentStart, pos);
 
                     let newLineIndent = 0;
 
-                    while (
-                        source[pos] === ' ' ||
-                        source[pos] === '\t' ||
-                        source[pos] === '\n' ||
-                        source[pos] === '\r'
-                    ) {
-                        if (source[pos] == ' ') {
+                    while (newLineIndent - initialIndent < 2) {
+                        if (source[pos] === ' ') {
                             newLineIndent++;
                         } else if (source[pos] === '\t') {
                             newLineIndent += 2;
+                        } else if (
+                            source[pos] !== '\n' &&
+                            source[pos] !== '\r'
+                        ) {
+                            break;
                         }
 
                         pos++;
@@ -340,8 +352,20 @@ export const parse = (
                             (source[pos + 1] === ' ' ||
                                 source[pos + 1] === '\t')
                         ) {
-                            continue list;
+                            pos += 2;
+
+                            break listItem;
                         } else {
+                            listItems[listItems.length] = {
+                                children: parse(
+                                    itemContent,
+
+                                    0,
+
+                                    itemContent.length,
+                                ).body,
+                            };
+
                             break list;
                         }
                     }
@@ -384,6 +408,11 @@ export const parse = (
 
             /**
              *
+             *
+             *
+             *
+             *
+             *
              * {@link OrderedList.startNumber}
              *
              */
@@ -392,6 +421,7 @@ export const parse = (
 
             while (source[pos] >= '0' && source[pos] <= '9') {
                 startNumber += source[pos];
+
                 pos++;
             }
 
@@ -480,6 +510,7 @@ export const parse = (
                 listItems[listItems.length] = {
                     children: parse(itemContent, 0, itemContent.length).body,
                 };
+
                 itemContent = '';
             }
 
@@ -505,7 +536,7 @@ export const parse = (
         }
 
         if (char === '>' && checkStartOfLine(source, sourceStart, pos - 1)) {
-            const start = pos;
+            const paragraphEnd = pos;
 
             pos++;
 
@@ -550,10 +581,14 @@ export const parse = (
                 pos++;
             }
 
-            if (checkHasContent(source, lastParagraphStart, start)) {
+            if (checkHasContent(source, lastParagraphStart, paragraphEnd)) {
                 body[body.length] = {
                     type: 'Paragraph',
-                    children: parseInline(source, lastParagraphStart, start),
+                    children: parseInline(
+                        source,
+                        lastParagraphStart,
+                        paragraphEnd,
+                    ),
                 };
             }
             body[body.length] = {
@@ -584,7 +619,6 @@ export const parse = (
 
     return AST;
 };
-
 /**
  *
  * #### Parses Inline markdown (Emphasis, Text).
