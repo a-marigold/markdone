@@ -1,8 +1,9 @@
-import type { AST, ASTInlineNode, List } from '../parser';
+import type { AST, ASTInlineNode, UnorderedList } from '../parser';
 
 import type { MarkdownCSSClasses, CodeHighlighter } from './types';
 
 /**
+ *
  * #### Generates HTML from provided `AST` with markdown nodes.
  *
  *
@@ -17,6 +18,7 @@ import type { MarkdownCSSClasses, CodeHighlighter } from './types';
  *
  *
  * @returns {string} String with generated HTML
+ *
  *
  * @example
  * ```typescript
@@ -95,11 +97,28 @@ export const generate = (
             continue;
         }
 
-        if (currentNode.type === 'List') {
-            generated += generateUnorderedList(currentNode.items, cssClasses);
+        if (currentNode.type === 'UnorderedList') {
+            generated += '<ul class="' + cssClasses.unorderedList + '">';
+
+            const openedLi = '<li class="' + cssClasses.listItem + '">';
+            const closedLi = '</li>';
+
+            const items = currentNode.items;
+            const itemsLength = items.length;
+
+            let itemIndex = 0;
+            while (itemIndex < itemsLength) {
+                generated +=
+                    openedLi +
+                    generate(items[itemIndex].children, cssClasses) +
+                    closedLi;
+
+                itemIndex++;
+            }
+
+            generated += '</ul>';
 
             bodyPos++;
-
             continue;
         }
 
@@ -125,6 +144,7 @@ export const generate = (
 };
 
 /**
+ *
  *
  *
  * #### Generates markdown `Emphasis` like `Bold`, `Italic` and `InlineCode`.
@@ -272,56 +292,6 @@ export const generateInline = (
 
         nodePos++;
     }
-
-    return generated;
-};
-
-/**
- *
- * #### Generates HTML with `<ul>...</ul>` from `List['items']` AST Node.
- *
- * @param rootItems Entrypoint with `List['items']`.
- * @param cssClasses Object with classes of markdown HTML nodes.
- *
- *
- * @returns {string} String with `<ul>...</ul>` html struct.
- *
- *
- *
- *
- *
- *
- */
-export const generateUnorderedList = (
-    rootItems: List['items'],
-    cssClasses: MarkdownCSSClasses,
-): string => {
-    let generated: string = '<ul class="' + cssClasses.unorderedList + '">';
-
-    /**
-     * Used for better performance because reading `cssClasses` object in items loop is heavy operation
-     */
-    const openedLi = '<li class="' + cssClasses.listItem + '">';
-    const closedLi = '</li>';
-
-    const listLength = rootItems.length;
-
-    let itemIndex = 0;
-    while (itemIndex < listLength) {
-        const currentItems = rootItems[itemIndex].items;
-
-        generated +=
-            openedLi +
-            generate(rootItems[itemIndex].children, cssClasses) +
-            (currentItems.length
-                ? generateUnorderedList(currentItems, cssClasses)
-                : '') +
-            closedLi;
-
-        itemIndex++;
-    }
-
-    generated += '</ul>';
 
     return generated;
 };
